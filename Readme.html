@@ -26,12 +26,57 @@ jumps to a freespace block. To call those subroutines anywhere, you <kbd>JSL</kb
 list instead of the freespace. Each time you patch, only the <kbd>JML</kbd> jump destination and
 the subroutine itself can change, while the <kbd>JML</kbd> themselves stay at the same place. This renders
 the subroutine jump to be stable and won't suddenly jump into now-deleted code which can crash your game.
-
+<h2>What you need</h2>
+<ul>
+<li><a href="https://www.smwcentral.net/?p=section&a=details&id=4611">Slogger</a> (recommended, but a debugger will also work if you find data filled with zeroes or <kbd>FF<kbd>s)</li>
+</ul>
 <h2>How to use</h2>
-If you want to port your codes that uses !defines natively (or defines used exclusively in the routine)
-to the shared subroutines patch (some patches uses subroutines), see <a name="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>
-on how to do so.
 <ol>
+<li>Open <kbd>SharedSub_Defines/SubroutineDefs.asm</kbd>, and here, you see a define <kbd>!FreespaceU</kbd>, this is the address to place your JML list (comes with an 8-byte RATS
+tag preceding if needed). Using slogger, you want to make sure that this define points to the <b>beginning</b> location of the freespace (that is big enough), you don't want to
+inadvertently place the list at an area that would overwrite other codes. To find freespace, use slogger (drop your game file on the exe). Mine may look different from yours:
+<table><tr><td><pre>C:\Users\RedBro\Desktop\smw romhacking\Submission\shared_sub\a.smc
+headered
+ROM is 0x100000 bytes long
+
+PC offset		LoROM offset		Size
+
+0x0812C4		0x1090C4		0x6F34
+0x090200		0x128000		0x8000
+0x098200		0x138000		0x8000
+0x0A0200		0x148000		0x8000
+0x0A8200		0x158000		0x8000
+0x0B0200		0x168000		0x8000
+0x0B8200		0x178000		0x8000
+0x0C0200		0x188000		0x8000
+0x0C8200		0x198000		0x8000
+0x0D0200		0x1A8000		0x8000
+0x0D8200		0x1B8000		0x8000
+0x0E0200		0x1C8000		0x8000
+0x0E8200		0x1D8000		0x8000
+0x0F0200		0x1E8000		0x8000
+
+A total of 0x6EF34 bytes of free space were found
+IMPORTANT: The "LoROM Offset" is what is entered in xkas as free space
+</pre></td></tr></table>
+
+Now what you must pay attention to <kbd>LoROM Offset</kbd> and the <kbd>size</kbd>, LoROM offset
+is the starting SNES memory location that is empty, and size the number of bytes. Because each
+JML instruction is 4 bytes long (1 byte for the opcode alone, 3 for the address), the formula of how much space you would need is:
+<table><tr><td><pre>BytesTaken = RatsSpace + (NumberOfJMLs * 4)
+
+;RatsSpace:
+; = 0 if you have !FreespaceU be at banks $00-$0F or $80-$8F
+; = 8 otherwise ($10-$7F or $90-$FF).</pre></td></tr></table>
+
+In case you don't know, a bank is a byte of the leftmost (or highest) 8-bit value of a 24-bit address: the XX in
+$XXyyyy.<br><br>
+
+With the example above, I choose <kbd>$128000</kbd> (so I set <kbd>!FreespaceU</kbd> to that address number), now look at the left two hex
+digits, that is bank $12, and if you haven't added any new routines or remove any, the number of bytes the JML list takes is
+<kbd>208 = 8 + (50 * 4)</kbd>. Therefore the address range would be  $128000 to $1280CF. Assuming you are an average user, I recommend picking a freespace that is at least $4000 (16384 decimal) bytes large.
+
+</li>
 <li>Open <kbd>subroutinecode.asm</kbd> and on the very bottom after the last subroutine, create your routine,
 here is a simple example:
 <table><tr><td><pre>MyRoutine123:
@@ -41,14 +86,15 @@ here is a simple example:
 	RTL
 </pre></td></tr></table>
 </li>
-<li>Next, create an <kbd>autoclean JML RoutineMainLabel</kbd> on the list entry like so:
+<li>Next, create an <kbd>autoclean JML RoutineMainLabel</kbd> on the JML list entry like so:
 <table><tr><td><pre>;[...]
 autoclean JML LoseYoshi				; make Yoshi run away
 autoclean JML MyRoutine123			;>This new routine
 JMLListEnd: ;>The byte-address +1 from the last byte. ;>Don't items after this label, otherwise stuff past here is not protected by RATS.
 </pre></td></tr></table>
-</li>
-<li>And if you want to call this routine from third-party resources, like from blocks, sprites, patches, uberasm tool, etc,
+Now run Asar to insert the routines package into your game.
+</li><br>
+<li>To call this routine from third-party resources, like from blocks, sprites, patches, uberasm tool, etc,
 you must define the &ldquo;label defines&rdquo; by copying the folder <kbd>SharedSub_Defines</kbd> and call
 that using the incsrc command in asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines:
 <table><tr><td><pre>incsrc "SharedSub_Defines/SubroutineDefs.asm"
@@ -56,6 +102,9 @@ that using the incsrc command in asm files that calls the <kbd>subroutinecode.as
 	JSL !MyRoutine123</pre></td></tr></table>
 </li>
 </ol>
+If you want to port your codes that uses !defines natively (or defines used exclusively in the routine)
+to the shared subroutines patch (many patches uses subroutines), see <a name="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>
+on how to do so.
 
 <h2>Workings documentation</h2>
 Each subroutine holds these items:
@@ -84,13 +133,14 @@ and not this:
 %SetDefine(AnotherSubroutineExample)
 %SetDefine(SubroutineName)</font></pre></td></tr></table><br>
 
-Because then the labels gets assigned to the wrong define(s). The defines are operated in a loop that each define label
-contain an address that are incremented by 4 bytes (because the instruction <kbd>JML $xxxxxx</kbd> takes 4 bytes) instead
-of extracting the labels to obtain their list position, which is impossible.<br><br>
+Because then the labels gets assigned to the wrong define(s). The defines are assigned to an address via a macro (except the first)
+being called repeatedly that each and every define are incremented by 4 bytes as they go down the list of them (because the
+instruction <kbd>JML $xxxxxx</kbd> takes 4 bytes, initially plus 8 if a rats tag exist) instead of extracting the labels to
+obtain their list position, which is impossible. So therefore, defines are &ldquo;separate&rdquo; from the actual location.<br><br>
 
 If you change <kbd>!FreespaceU</kbd>'s address, then patch again, it does not remove the old JML list, you have to manually
 erase them using either a debugger or a hex editor. This is because the list itself stored in the ROM must be at a fixed
-location.<br><br>
+location being defined by <kbd>!FreespaceU</kbd>, so Asar cannot magically know that previous spot location.<br><br>
 
 <li><kbd>subroutinecode.asm</kbd> holds the subroutine code itself. Format:
 <table><tr><td><pre>SubroutineName:
@@ -109,10 +159,10 @@ so you won't get error saying &ldquo;label not found&rdquo;) because multiples f
 subroutine without using a define (<kbd>JSL SubroutineName</kbd> instead of <kbd>JSL !SubroutineName</kbd> to save a few cycles, since you don't
 have to jump to a JML in the JML list, then back into the routine code)</li><br>
 
-<li>Due to how the SNES banks work, if you have a very large code in <kbd>subroutinecode.asm</kbd> and/or a large JML list (the limit is 16,384
+<li>Due to how the SNES bank borders work, if you have a very large code in <kbd>subroutinecode.asm</kbd> and/or a large JML list (the limit is 8192
 JMLs if you were to place the list at the start of the bank (address $xx0000) that is completely empty and not using banks $10-$7F and $90-$FF) that would
-exceed $10000 bytes (a full bank), asar errors out saying a bank border have been crossed. To fix this, simply
-use <kbd>freecode</kbd> command near the area (between two subroutines, data, or table, not during that area) that is about
+exceed $*000 bytes (a full bank is actually $10000 bytes big, but only half is used in the ROM), asar errors out saying a bank border have
+been crossed. To fix this, simply use <kbd>freecode</kbd> command near the area (between two subroutines, data, or table, not during that area) that is about
 to cross the border. This will make the section after <kbd>freecode</kbd> use a different freespace location.
 You may have to use this code just in case since the bank value doesn't get updated and you're using a
 16-bit table addressing:
@@ -127,5 +177,23 @@ You may have to use this code just in case since the bank value doesn't get upda
 <li>When selecting a location (by setting <kbd>!FreespaceU</kbd>) to insert your JML list, if you pick an area in banks <kbd>$10</kbd> or
 higher, the 8-byte RATS tag will be included (RATS tag is at <kbd>!FreespaceU</kbd>, and 8 bytes after the starting byte is the actual
 JML list (don't worry, the define also adjust 8 bytes to align with the JML location)).</li>
-</li>
+</li><br>
+
+<li>If you experience weird glitches or a crash when you patch a third-party freespace patch, then re-apply this patch, its likely that the previous patch before this
+must've been placed a freespace code after the JML list of this patch, then gets overwritten by the expaned JML list. A simple fix is to create placeholder JMLs
+(they're just empty routines that just exist so that in the future, you can replace it to be an actual routine) on the list so that other freespace-required
+patches don't &ldquo;cut in line&rdquo; of the JML list, here is what I mean:
+<table><tr><td><pre>;Make sure the list ends with nth number of these, and not to have actual routines after if you're not going to have these defined,
+;else you would assign the defines to the wrong label.
+autoclean JML Placeholder
+autoclean JML Placeholder
+autoclean JML Placeholder
+autoclean JML Placeholder
+autoclean JML Placeholder
+;[...] ;>expand this as many as you would expect how many routines you would need.
+JMLListEnd: ;>The byte-address +1 from the last byte.</pre></pre></td></tr></table></li>
+
+<kbd>subroutinecode.asm</kbd>:
+<table><tr><td><pre>PlaceHolder:
+	RTL;>A blank subroutine that just exist (you only need to have this code exist once).</pre></pre></td></tr></table></li>
 </ul>

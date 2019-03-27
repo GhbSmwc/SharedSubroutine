@@ -2,9 +2,9 @@
 !F = |$800000
 
 !FreespaceU = $84A200
-;^[BytesUsed = RatsIfNeeded+(NumberOfSub*4)]
+;^[BytesUsed = RatsSpace+(NumberOfJMLs*4)]
 ; RatsIfNeeded = 0 if you have [BankNumber & $7F] less than $10
-;  (so if you are in banks $00-$7F, its $10 and up, for $80-$FF, its $90 and up).
+;  (so if you are in banks $00-$7F, its $10-$7F, for $80-$FF, its $90-$FF).
 ; RatsIfNeeded = 8 otherwise.
 ;
 ; The fixed location where the JMLs list to be inserted.
@@ -99,15 +99,3 @@
 %SetDefine(CustSolidSpriteRt)
 %SetDefine(CustSolidSpriteRtA)
 %SetDefine(LoseYoshi)
-
-
-;Don't touch this,
-;don't put items of the list after this (it only counts whats on the list before here).
-;this displays the end of list location.
-print"------------------------Shared Subroutines memory statistics-------------------------
-print "Number of JMLs in list: ", dec(!JMLListCount)
-if !JMLListRatsTagSize != 0
-	print "RATS tag location: $", hex(!FreespaceU), "to $", hex(!FreespaceU+7)
-endif
-print "JML list memory usage range: $", hex(!FreespaceU), " to $", hex(!FreespaceU+(4*(!JMLListCount-1))+3)
-print"-------------------------------------------------------------------------------------

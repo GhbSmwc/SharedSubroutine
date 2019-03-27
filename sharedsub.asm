@@ -112,6 +112,12 @@ org !FreespaceU
 ;^This is the starting address for the subroutines.  All "JSL [insert subroutine here]" commands should
 ; be JSLing to this bank.
 
+print "Number of JMLs in list: ", dec(!JMLListCount)
+if !JMLListRatsTagSize != 0
+	print "RATS tag location: $", hex(!FreespaceU), "to $", hex(!FreespaceU+7)
+endif
+print "JML list memory usage range: $", hex(!FreespaceU), " to $", hex(!FreespaceU+(4*(!JMLListCount-1))+3)
+
 if (!FreespaceU>>16)&$7F >= $10
 	db "S","T","A","R"					;>[4 bytes] rats tag itself
 	dw JMLListEnd-JMLListStart-1			;>[2 bytes] size-1
