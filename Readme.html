@@ -1,0 +1,131 @@
+<html>
+	<head>
+		<style>
+			table, th, td {
+				border: 1px solid black;
+				border-collapse: collapse;
+			}
+		</style>
+	</head>
+<body>
+
+<center><h1>Shared Subroutines Patch</h1></center>
+<center><h2>Created and updated by <a href="https://www.smwcentral.net/?p=profile&id=3471">imamelia</a>
+and supported by <a href="https://www.smwcentral.net/?p=profile&id=18802">GreenHammerBro.</a></h2></center>
+
+What this patch does is enable you to have &ldquo;universal availability&rdquo; subroutines
+accessible anywhere in your ROM, and also by other third-party patches/code without the need to
+have duplicate codes that can waste space in your game. The reason for this patch is because
+patches commonly needs a freespace (in the olden days when xkas was popular, you have to
+manually set them up, and Asar automatically finds those freespace), thus the code themselves
+have varying locations and isn't safe to have other things call that moving subroutine each
+time the user re-patches them.<br><br>
+
+It works by having a list of <kbd>JML</kbd>s in a <i>fixed location</i>. Those <kbd>JML</kbd>s then
+jumps to a freespace block. To call those subroutines anywhere, you <kbd>JSL</kbd> to that <kbd>JML</kbd>
+list instead of the freespace. Each time you patch, only the <kbd>JML</kbd> jump destination and
+the subroutine itself can change, while the <kbd>JML</kbd> themselves stay at the same place. This renders
+the subroutine jump to be stable and won't suddenly jump into now-deleted code which can crash your game.
+
+<h2>How to use</h2>
+If you want to port your codes that uses !defines natively (or defines used exclusively in the routine)
+to the shared subroutines patch (some patches uses subroutines), see <a name="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>
+on how to do so.
+<ol>
+<li>Open <kbd>subroutinecode.asm</kbd> and on the very bottom after the last subroutine, create your routine,
+here is a simple example:
+<table><tr><td><pre>MyRoutine123:
+	;Sets current player's lives to 99.
+	LDA.b #98 ;>In SMW's lives system, the value stored in memory is -1 from displayed (if HUD says 5, its #$04)
+	STA $0DBE|!addr
+	RTL
+</pre></td></tr></table>
+</li>
+<li>Next, create an <kbd>autoclean JML RoutineMainLabel</kbd> on the list entry like so:
+<table><tr><td><pre>;[...]
+autoclean JML LoseYoshi				; make Yoshi run away
+autoclean JML MyRoutine123			;>This new routine
+JMLListEnd: ;>The byte-address +1 from the last byte. ;>Don't items after this label, otherwise stuff past here is not protected by RATS.
+</pre></td></tr></table>
+</li>
+<li>And if you want to call this routine from third-party resources, like from blocks, sprites, patches, uberasm tool, etc,
+you must define the &ldquo;label defines&rdquo; by copying the folder <kbd>SharedSub_Defines</kbd> and call
+that using the incsrc command in asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines:
+<table><tr><td><pre>incsrc "SharedSub_Defines/SubroutineDefs.asm"
+	;[...]
+	JSL !MyRoutine123</pre></td></tr></table>
+</li>
+</ol>
+
+<h2>Workings documentation</h2>
+Each subroutine holds these items:
+<ul>
+<li>Label &#x2194; definition files:</li>
+<ul><li><kbd>sharedsub.asm</kbd> which holds the JML list. Format: <kbd>autoclean JML SubroutineName</kbd></li><br>
+<li><kbd>subroutinedefs.asm</kbd> which is the definition file. The subroutine labels gets assigned to
+the definition name (thus, using <kbd>SubroutineName</kbd> as a label for your subroutine, the definition
+to access this subroutine is <kbd>!SubroutineName</kbd>, you simply call using <kbd>JSL !SubroutineName</kbd>).
+This is because Asar (or other patching tools) is unaware of what is installed inside the ROM, so it cannot obtain the locations
+of the start of the routines.
+</li></ul><br>
+Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the defines list in <kbd>SubroutineDefs.asm</kbd> must match,
+for example:
+<table><tr><td><pre>;[...]
+autoclean JML SubroutineName
+autoclean JML AnotherSubroutineExample</pre></td></tr></table><br>
+
+means that in the definition file, it needs to be ordered like this:
+<table><tr><td><pre>;[...]
+%SetDefine(SubroutineName)
+%SetDefine(AnotherSubroutineExample)</pre></td></tr></table><br>
+
+and not this:
+<table><tr><td><pre><font color="red">;[...]
+%SetDefine(AnotherSubroutineExample)
+%SetDefine(SubroutineName)</font></pre></td></tr></table><br>
+
+Because then the labels gets assigned to the wrong define(s). The defines are operated in a loop that each define label
+contain an address that are incremented by 4 bytes (because the instruction <kbd>JML $xxxxxx</kbd> takes 4 bytes) instead
+of extracting the labels to obtain their list position, which is impossible.<br><br>
+
+If you change <kbd>!FreespaceU</kbd>'s address, then patch again, it does not remove the old JML list, you have to manually
+erase them using either a debugger or a hex editor. This is because the list itself stored in the ROM must be at a fixed
+location.<br><br>
+
+<li><kbd>subroutinecode.asm</kbd> holds the subroutine code itself. Format:
+<table><tr><td><pre>SubroutineName:
+&lt;Code here&gt;
+;ends using an RTL, not RTS.</pre></td></tr></table></li><br>
+</ul>
+<h2>Notes</h2>
+<ul>
+<li>Be very careful to avoid having label duplicates (i.e &ldquo;redefined label&rdquo;), as asar would error out saying that
+they are redefined. This likely happens when you add a new routine that does not use sublabels. To avoid this, edit the code to
+use it (number of &ldquo;.&rdquo;s before the name of the sublabel) or +/- (have them repeated should one jumps over another
+(example: <kbd>BRA ++</kbd> to branch downards to the first <kbd>++</kbd>)).</li><br>
+
+<li>It is safe to call a routine within a routine, since they are in the same patch (Asar knows the labels within <kbd>subroutinecode.asm</kbd>,
+so you won't get error saying &ldquo;label not found&rdquo;) because multiples files connected via <kbd>incsrc</kbd>), you can simply call the
+subroutine without using a define (<kbd>JSL SubroutineName</kbd> instead of <kbd>JSL !SubroutineName</kbd> to save a few cycles, since you don't
+have to jump to a JML in the JML list, then back into the routine code)</li><br>
+
+<li>Due to how the SNES banks work, if you have a very large code in <kbd>subroutinecode.asm</kbd> and/or a large JML list (the limit is 16,384
+JMLs if you were to place the list at the start of the bank (address $xx0000) that is completely empty and not using banks $10-$7F and $90-$FF) that would
+exceed $10000 bytes (a full bank), asar errors out saying a bank border have been crossed. To fix this, simply
+use <kbd>freecode</kbd> command near the area (between two subroutines, data, or table, not during that area) that is about
+to cross the border. This will make the section after <kbd>freecode</kbd> use a different freespace location.
+You may have to use this code just in case since the bank value doesn't get updated and you're using a
+16-bit table addressing:
+
+<table><tr><td><pre>	PHB		;>Preserve bank into stack
+	PHK		;>Push current bank
+	PLB		;>Pull out as current bank
+	;[...]		;>code that would need a correct bank
+	PLB
+	;[...]</pre></td></tr></table><br>
+
+<li>When selecting a location (by setting <kbd>!FreespaceU</kbd>) to insert your JML list, if you pick an area in banks <kbd>$10</kbd> or
+higher, the 8-byte RATS tag will be included (RATS tag is at <kbd>!FreespaceU</kbd>, and 8 bytes after the starting byte is the actual
+JML list (don't worry, the define also adjust 8 bytes to align with the JML location)).</li>
+</li>
+</ul>

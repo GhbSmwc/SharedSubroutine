@@ -1,0 +1,50 @@
+5 items in the main directory (in case if a file is missing)
+;
+Note: Date sorted from newest to oldest  (M/D/Y). Version number period symbol means
+a sub-version (like a chapter number), NOT a decimal point (goes like this 1.8, 1.9,
+1.10... and not 1.8, 1.9 2.0...). 
+
+Format: M/D/Y date format, list ordered from recent to oldest.
+3/27/2019 -2.3
+ -Removed several JSL !Defines in subroutinecode.asm and converted them to jump to the routines
+  directly since both codes and labels are in the same file and ASAR won't error out saying
+  label not found.
+ -Improved the readme on how to insert this patch.
+ -Added a tutorial on how to insert routines that uses freeram defines of potentially other patches.'
+ -Patching now display the memory statistics and how many subroutines was added, useful for debugging.
+4/26/2018 - improved rats tags, v2.2
+ -Realized that the defines assumes the JML starts directly where
+  the rats tags start, causing the first two subroutine to be
+  invalid (can crash the game) as they never actually point to
+  the actual JML list.
+ -In addition to that, I've talk to MarioFanGamer (ID:22951)
+  that when using freespace in banks $10 or higher, so I
+  implemented a check to not include the rats tag when banks $0F
+  or lower.
+ -Fixed various issues that this WASN'T TESTED AT ALL, this
+  mainly includes an undefined define "!SlotsUsed" preventing
+  the patch to be inserted.
+ -Defines files are moved to a subfolder of this package to keep
+  things organized as well as making defines for other patches/3rd party code
+  to use the shared subroutines patch a cinch (you only copy the folder containing
+  the defines).
+
+4/25/2018 - rats tags, v2.1
+ -Added rats tags.
+
+4/7/2018 to 4/8/2018- imamelia + GHB update, v2.0
+ -imamelia:
+ --Recoded to work with Asar (Xkas is outdated)
+ --Routines are now documented, making usage much easier for user who don't know
+   how the routine works.
+ --The definition file now uses macros that assigns the label names to the defines,
+   making it easier to edit them.
+ -GreenHammerBro
+ --Added a readme instruction on how to use and documentation on potential errors
+   that can happen.
+ --Added SA-1 support to most subroutines (some of them aren't compatible because
+   either they uses the SNES registers, codes uses unsigend multiplication/division
+   while SA-1 only provides signed version, etc.)
+   
+6/22/2011 v1.01
+ -First release.
