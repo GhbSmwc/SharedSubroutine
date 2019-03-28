@@ -1,2 +1,79 @@
+<html>
+	<head>
+		<style>
+			table, th, td {
+				border: 1px solid black;
+				border-collapse: collapse;
+			}
+		</style>
+	</head>
+<body>
+
 <a href="../Readme.html#RoutinePort">Back</a>
-<h1>Porting Subroutines with defines to the shared subroutines patch.</h1>
+<center><h1>Porting Subroutines with defines to the shared subroutines patch.</h1></center>
+<ol>
+<li>Perhaps you want to move this simple example code to the shared subroutines patch:
+<table><tr><td><pre>!Define0 = $60
+!Define1 = $61
+!Define2 = $62
+!Define3 = $63
+MyRoutine123
+	LDA #$01
+	STA !Define0
+	LDA #$02
+	STA !Define1
+	LDA #$03
+	STA !Define2
+	LDA #$04
+	STA !Define3
+	RTL</pre></td></tr></table>
+Pretty simple! just copy the whole thing, making sure nothing unrelated modifies the values in the defines in between whats sets them (top) and the codes that uses them
+(this happens if 2 or more patches happens to have defines with the same name, like for example, player HP is defined <kbd>!Health = $60</kbd> and a sprite using the same
+define, <kbd>!Health = $7C</kbd>).
+Of course, the same applies if the defines are in a separate file and uses <kbd>incsrc "&lt;path&gt;"</kbd> (includes &ldquo;source file&rdquo;)<br><br>
+
+defines.asm:
+<table><tr><td><pre>!Define0 = $60
+!Define1 = $61
+!Define2 = $62
+!Define3 = $63</pre></td></tr></table><br><br>
+
+AnotherDefinesFile.asm:
+<table><tr><td><pre>!AnotherDefine0 = $7C
+!AnotherDefine1 = $87</pre></td></tr></table><br>
+
+Routine code:
+<table><tr><td><pre>incsrc "defines.asm"
+incsrc "AnotherDefinesFile.asm" ;>In the case you have an ASM resource with defines being in different ASM files.
+MyRoutine123:
+	LDA #$01
+	STA !Define0
+	LDA #$02
+	STA !Define1
+	LDA #$03
+	STA !Define2
+	LDA #$04
+	STA !Define3
+	
+	LDA !AnotherDefine0
+	CLC
+	ADC #$05
+	STA !AnotherDefine0
+	
+	LDA !AnotherDefine1
+	SEC
+	SBC #$05
+	STA !AnotherDefine1
+	RTL</pre></td></tr></table>
+If you have another subroutine that uses the same defines as the other, place the defines or the &ldquo;include source&rdquo; before ALL (on top) of them so you don't get errors.</li><br>
+
+<li>However, not all patches have conveniently named defines, some don't use specific terms and use broad terms, like the example <kbd>!Health</kbd>, which is bad as that the naming term
+could be used for completely different purposes (is this for enemy or player? Better to use name terms like <kbd>!PlayerHealth</kbd> and <kbd>!EnemyHealth</kbd>). To fix this issue so that
+they can be merged into one subroutine file without glitches, its best to edit their defines in their original ASM file (and in the defines file if present), then move them to here (so you
+don't accidentally replace unrelated defines on unrelated code). If multiple ASM files and/or resources intentionally use the same define name (often with the same default value), such as
+the ground pound patch and a block in the blocks section that interacts with ground pound, make sure ALL of them are renamed for a more specific term.<br><br>
+
+Renaming the defines can easily be done using a text editor of your choice (I recommend using notepad++) and replace (CTRL+H), then carefully replace all of them (all in each of them
+and all files that uses it) by pressing &ldquo;replace&rdquo; (careful that the &ldquo;find&rdquo; mechanism may find keywords within a word, like searching for &ldquo;<kbd>!One</kbd>&rdquo; could point to
+<kbd><u>!One</u>TwoThree</kbd>).</li>
+</ol>

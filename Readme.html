@@ -117,7 +117,8 @@ to access this subroutine is <kbd>!SubroutineName</kbd>, you simply call using <
 This is because Asar (or other patching tools) is unaware of what is installed inside the ROM, so it cannot obtain the locations
 of the start of the routines.
 </li></ul><br>
-Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the defines list in <kbd>SubroutineDefs.asm</kbd> must match,
+Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the defines list in <kbd>SubroutineDefs.asm</kbd> must match (this includes
+not to have missing defines on a JML item that does exist, and vice versa),
 for example:
 <table><tr><td><pre>;[...]
 autoclean JML SubroutineName
@@ -133,10 +134,32 @@ and not this:
 %SetDefine(AnotherSubroutineExample)
 %SetDefine(SubroutineName)</font></pre></td></tr></table><br>
 
-Because then the labels gets assigned to the wrong define(s). The defines are assigned to an address via a macro (except the first)
-being called repeatedly that each and every define are incremented by 4 bytes as they go down the list of them (because the
-instruction <kbd>JML $xxxxxx</kbd> takes 4 bytes, initially plus 8 if a rats tag exist) instead of extracting the labels to
-obtain their list position, which is impossible. So therefore, defines are &ldquo;separate&rdquo; from the actual location.<br><br>
+And this:
+<table><tr>
+<td><pre>autoclean JML FindFreeUploadSlot
+autoclean JML GetRand2
+<font color="red">autoclean JML RangedRandomRt</font> ;>Not assigned to define.
+autoclean JML ChangeMap16
+autoclean JML FindMap16ActsLike
+autoclean JML FindMap16TileNum
+autoclean JML SubGetItemMemory
+;[...]</pre></td>
+
+<td><pre>!FindFreeUploadSlot = JMLListStart	;>The first JML doesn't get a macro so that it doesn't skip 4 bytes after "JMLListStart".
+%SetDefine(GetRand2)
+<font color="yellow">%SetDefine(ChangeMap16)</font>
+<font color="yellow">%SetDefine(FindMap16ActsLike)</font>
+<font color="yellow">%SetDefine(FindMap16TileNum)</font>
+<font color="yellow">%SetDefine(SubGetItemMemory)</font>
+;[...]</pre></td>
+</tr></table>
+
+Because then the labels gets assigned to the wrong define(s).<br><br>
+
+What actually happens is that defines are being assigned to a JML manually; its guessed via taking the first JML address and adds by 4 for each
+define through a macro being called without regards to the actual JML list (Asar cannot &ldquo;extract&rdquo; the list to find out what defines
+correspond to what define). Thus the defines are being independent, each subsequent subroutine define means the next JML list item, regardless
+of its label name nor its define.
 
 If you change <kbd>!FreespaceU</kbd>'s address, then patch again, it does not remove the old JML list, you have to manually
 erase them using either a debugger or a hex editor. This is because the list itself stored in the ROM must be at a fixed
