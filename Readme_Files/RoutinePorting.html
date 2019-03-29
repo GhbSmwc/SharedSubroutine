@@ -11,6 +11,7 @@
 
 <a href="../Readme.html#RoutinePort">Back</a>
 <center><h1>Porting Subroutines with defines to the shared subroutines patch.</h1></center>
+
 <ol>
 <li>Perhaps you want to move this simple example code to the shared subroutines patch:
 <table><tr><td><pre>!Define0 = $60
@@ -67,13 +68,16 @@ MyRoutine123:
 	RTL</pre></td></tr></table>
 If you have another subroutine that uses the same defines as the other, place the defines or the &ldquo;include source&rdquo; before ALL (on top) of them so you don't get errors.</li><br>
 
-<li>However, not all patches have conveniently named defines, some don't use specific terms and use broad terms, like the example <kbd>!Health</kbd>, which is bad as that the naming term
-could be used for completely different purposes (is this for enemy or player? Better to use name terms like <kbd>!PlayerHealth</kbd> and <kbd>!EnemyHealth</kbd>). To fix this issue so that
-they can be merged into one subroutine file without glitches, its best to edit their defines in their original ASM file (and in the defines file if present), then move them to here (so you
-don't accidentally replace unrelated defines on unrelated code). If multiple ASM files and/or resources intentionally use the same define name (often with the same default value), such as
-the ground pound patch and a block in the blocks section that interacts with ground pound, make sure ALL of them are renamed for a more specific term.<br><br>
+<li>However, not all patches have conveniently named defines, resulting variables in them to be altered when they get redefined, often when two unrelated codes use the same
+define, for example: just <kbd>!Health</kbd> is set to be a value of <kbd>$60</kbd>, another and later <kbd>!Health</kbd> is set to <kbd>$0F3A</kbd>. As asar process the ASM files in a sequential analysis,
+<kbd>!Health</kbd> will contain a value of whats last sets it every time. With such a name, this is bad as that the naming term could be used for completely different purposes (is this for enemy or player?
+Better to use name terms like <kbd>!RAM_PlayerHealth</kbd> and <kbd>!RAM_EnemyHealth</kbd>. To fix this issue,
+its best to edit their defines in their original ASM file (and in the defines file if present), then move them to here (so you don't accidentally edit other existing codes in the shared patch).
+If multiple ASM files and/or resources intentionally use the same define name (often with the same default value), such as the ground pound patch and a block in the blocks section that
+interacts with ground pound, make sure ALL of them are renamed for a more specific term.<br><br>
 
-Renaming the defines can easily be done using a text editor of your choice (I recommend using notepad++) and replace (CTRL+H), then carefully replace all of them (all in each of them
-and all files that uses it) by pressing &ldquo;replace&rdquo; (careful that the &ldquo;find&rdquo; mechanism may find keywords within a word, like searching for &ldquo;<kbd>!One</kbd>&rdquo; could point to
-<kbd><u>!One</u>TwoThree</kbd>).</li>
+Renaming the defines can easily be done using a text editor of your choice (I recommend using notepad++) and replace (CTRL+H), then carefully replace all of them by pressing &ldquo;replace&rdquo;
+(I recommend replacing one at a time and paying attention to how it is highlighted, not to be recommended to &ldquo;replace all&rdquo; for a fast edit because the &ldquo;find&rdquo; mechanism
+may find sequence of characters within a different define, like searching for &ldquo;<kbd>!Freeram_test</kbd>&rdquo; could point to <kbd><u>!Freeram_test</u>2</kbd> when you are looking for
+just <kbd>!Freeram_test</kbd>).</li>
 </ol>
