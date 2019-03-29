@@ -159,7 +159,7 @@ Because then the labels gets assigned to the wrong define(s).<br><br>
 What actually happens is that defines are being assigned to a JML manually; its guessed via taking the first JML address and adds by 4 for each
 define through a macro being called without regards to the actual JML list (Asar cannot &ldquo;extract&rdquo; the list to find out what defines
 correspond to what define). Thus the defines are being independent, each subsequent subroutine define means the next JML list item, regardless
-of its label name nor its define.
+of its label name nor its define.<br><br>
 
 If you change <kbd>!FreespaceU</kbd>'s address, then patch again, it does not remove the old JML list, you have to manually
 erase them using either a debugger or a hex editor. This is because the list itself stored in the ROM must be at a fixed
