@@ -147,10 +147,10 @@ autoclean JML SubGetItemMemory
 
 <td><pre>!FindFreeUploadSlot = JMLListStart	;>The first JML doesn't get a macro so that it doesn't skip 4 bytes after "JMLListStart".
 %SetDefine(GetRand2)
-<font color="yellow">%SetDefine(ChangeMap16)</font>
-<font color="yellow">%SetDefine(FindMap16ActsLike)</font>
-<font color="yellow">%SetDefine(FindMap16TileNum)</font>
-<font color="yellow">%SetDefine(SubGetItemMemory)</font>
+<font color="yellow">%SetDefine(ChangeMap16)</font>			;>Gets assigned to [RangedRandomRt]
+<font color="yellow">%SetDefine(FindMap16ActsLike)</font>		;>Gets assigned to [ChangeMap16]
+<font color="yellow">%SetDefine(FindMap16TileNum)</font>		;>Gets assigned to [FindMap16ActsLike]
+<font color="yellow">%SetDefine(SubGetItemMemory)</font>		;>Gets assigned to [FindMap16TileNum]
 ;[...]</pre></td>
 </tr></table>
 
