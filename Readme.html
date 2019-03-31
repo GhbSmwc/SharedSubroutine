@@ -194,8 +194,8 @@ You may have to use this code just in case since the bank value doesn't get upda
 	PHK		;>Push current bank
 	PLB		;>Pull out as current bank
 	;[...]		;>code that would need a correct bank
-	PLB
-	;[...]</pre></td></tr></table><br>
+	PLB		;>Restore bank.
+	;[...]		;>In case if you wanted code here that doesn't need current bank.</pre></td></tr></table><br>
 
 <li>When selecting a location (by setting <kbd>!FreespaceU</kbd>) to insert your JML list, if you pick an area in banks <kbd>$10</kbd> or
 higher, the 8-byte RATS tag will be included (RATS tag is at <kbd>!FreespaceU</kbd>, and 8 bytes after the starting byte is the actual
@@ -203,7 +203,7 @@ JML list (don't worry, the define also adjust 8 bytes to align with the JML loca
 </li><br>
 
 <li>If you experience weird glitches or a crash when you patch a third-party freespace patch, then re-apply this patch, its likely that the previous patch before this
-must've been placed a freespace code after the JML list of this patch, then gets overwritten by the expaned JML list. A simple fix is to create placeholder JMLs
+must've been placed a freespace code after the JML list of this patch, then gets overwritten by the expanded JML list. A simple fix is to create placeholder JMLs
 (they're just empty routines that just exist so that in the future, you can replace it to be an actual routine) on the list so that other freespace-required
 patches don't &ldquo;cut in line&rdquo; of the JML list, here is what I mean:
 <table><tr><td><pre>;Make sure the list ends with nth number of these, and not to have actual routines after if you're not going to have these defined,
@@ -218,5 +218,8 @@ JMLListEnd: ;>The byte-address +1 from the last byte.</pre></pre></td></tr></tab
 
 <kbd>subroutinecode.asm</kbd>:
 <table><tr><td><pre>PlaceHolder:
-	RTL;>A blank subroutine that just exist (you only need to have this code exist once).</pre></pre></td></tr></table></li>
+	RTL;>A blank subroutine that just exist (you only need to have this code exist once).</pre></pre></td></tr></table></li><br>
+
+<li>The information displayed on the Asar console window when patching is based on freeram and not on the actual code, so if you have placeholders without them being
+defined, it only counts the defines list due to being impossible to get address values from labels (this may change in the future if asar updates to allow it).</li>
 </ul>
