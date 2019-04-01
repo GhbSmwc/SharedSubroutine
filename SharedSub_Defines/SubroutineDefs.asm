@@ -21,12 +21,10 @@
 
 	!prev = first					;\Starting address of the JML list.
 	!first = !FreespaceU+!JMLListRatsTagSize	;/
-	!JMLListCount = 1
 
 	macro SetDefine(name)				;\Macro to assign each Subroutine label 
 		!{<name>} #= !{!prev}+4			;|to a !Define. Remember, JML takes 4 bytes:
 		!prev = <name>				;|[JML $123456] -> [5C 56 34 12]
-		!JMLListCount #= !JMLListCount+1
 	endmacro					;/
 	;Just to let you know, as of 4/27/2018, asar's manuel nor xkas
 	;mentioned that {} brackets can be used for label magic, thus

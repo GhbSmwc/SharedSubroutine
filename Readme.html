@@ -220,6 +220,6 @@ JMLListEnd: ;>The byte-address +1 from the last byte.</pre></pre></td></tr></tab
 <table><tr><td><pre>PlaceHolder:
 	RTL;>A blank subroutine that just exist (you only need to have this code exist once).</pre></pre></td></tr></table></li><br>
 
-<li>The information displayed on the Asar console window when patching is based on freeram and not on the actual code, so if you have placeholders without them being
-defined, it only counts the defines list due to being impossible to get address values from labels (this may change in the future if asar updates to allow it).</li>
+<li>The information displayed on the Asar console window when patching is whats actually inserted into the ROM, not based on defines. So if you have more items in
+the defines than on the JML list, that won't do anything to the game, nor the display (you probably want the number of entries in both lists to be equal anyways).</li>
 </ul>

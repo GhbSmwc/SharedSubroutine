@@ -112,23 +112,21 @@ org !FreespaceU
 ;^This is the starting address for the subroutines.  All "JSL [insert subroutine here]" commands should
 ; be JSLing to this bank.
 
-print "Number of JMLs in list: ", dec(!JMLListCount)
+print "----------------------------------------------------------------------------------------------"
 if !JMLListRatsTagSize != 0
-	print "RATS tag location: $", hex(!FreespaceU), "to $", hex(!FreespaceU+7)
+	print "RATS tag memory address range: $", hex(JMLListRatsStart), " to $", hex(JMLListRatsEnd-1), " (8 bytes)"
 endif
-print "JML list memory usage range: $", hex(!FreespaceU), " to $", hex(!FreespaceU+(4*(!JMLListCount-1))+3)
+print "JML list memory address range: $", hex(JMLListStart), " to $", hex(JMLListEnd-1), " (", dec(JMLListEnd-JMLListStart), " bytes, last JML location is at $", hex(JMLListEnd-4), ")"
+print "Number of JMLs in list: ", dec((JMLListEnd-JMLListStart)/4)
 
 if (!FreespaceU>>16)&$7F >= $10
+	JMLListRatsStart:
 	db "S","T","A","R"					;>[4 bytes] rats tag itself
 	dw JMLListEnd-JMLListStart-1			;>[2 bytes] size-1
 	dw (JMLListEnd-JMLListStart-1)^$FFFF			;>[2 bytes] XOR of above.
-	
-	!JMLListRatsTagSize = $08
-	print "rats tag for fixed JML list included (8 bytes taken)"
-else
-	!JMLListRatsTagSize = $00
-	print "Rats tag not included"
+	JMLListRatsEnd:
 endif
+print "----------------------------------------------------------------------------------------------"
 ;Once patched, in the ROM code, it should look like this:
 ;<Rats tag ["S", "T", "A", "R"], $XXXX, $YYYY>	;>8 bytes
 ;	JML $xxxxxx				;>4 bytes
@@ -140,7 +138,6 @@ endif
 ;to ensure that none of them get overwritten by other programs that modify the ROM.
 
 JMLListStart: ;>The start byte-address of the RATS
-print "JML list starts at $",pc
 ;Note: The order of this JML list must match with the defines list (the [%SetDefine(RoutineName)]).
 
 ; general
@@ -197,7 +194,8 @@ autoclean JML FindTilemapIndexSub	; find tilemap index without setting the GFX f
 autoclean JML CustSolidSpriteRt		; custom solid block/platform sprite interaction
 autoclean JML CustSolidSpriteRtA		; custom solid block/platform sprite interaction that uses customizable positions rather than the sprite tables
 autoclean JML LoseYoshi				; make Yoshi run away
-JMLListEnd: ;>The byte-address +1 from the last byte.
+
+JMLListEnd: ;>The byte-address +1 from the last byte. Make sure that this label does not have any JML list items after here.
 freecode
 
 incsrc subroutinecode.asm
