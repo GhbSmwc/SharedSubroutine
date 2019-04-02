@@ -195,7 +195,8 @@ autoclean JML CustSolidSpriteRt		; custom solid block/platform sprite interactio
 autoclean JML CustSolidSpriteRtA		; custom solid block/platform sprite interaction that uses customizable positions rather than the sprite tables
 autoclean JML LoseYoshi				; make Yoshi run away
 
-JMLListEnd: ;>The byte-address +1 from the last byte. Make sure that this label does not have any JML list items after here.
+JMLListEnd: ;>The byte-address +1 from the last byte.
+;^Don't items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
 freecode
 
 incsrc subroutinecode.asm

@@ -91,7 +91,8 @@ here is a simple example:
 <table><tr><td><pre>;[...]
 autoclean JML LoseYoshi				; make Yoshi run away
 autoclean JML MyRoutine123			;>This new routine
-JMLListEnd: ;>The byte-address +1 from the last byte. ;>Don't items after this label, otherwise stuff past here is not protected by RATS.
+JMLListEnd: ;>The byte-address +1 from the last byte.
+;^Don't items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
 </pre></td></tr></table>
 Now run Asar to insert the routines package into your game.
 </li><br>
