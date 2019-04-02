@@ -75,6 +75,7 @@ $XXyyyy.<br><br>
 With the example above, I choose <kbd>$128000</kbd> (so I set <kbd>!FreespaceU</kbd> to that address number), now look at the left two hex
 digits, that is bank $12, and if you haven't added any new routines or remove any, the number of bytes the JML list takes is
 <kbd>208 = 8 + (50 * 4)</kbd>. Therefore the address range would be  $128000 to $1280CF. Assuming you are an average user, I recommend picking a freespace that is at least $4000 (16384 decimal) bytes large.
+Upon patching <kbd>sharedsub.asm</kbd>, asar will display the memory statistics about the JML list (including the RATs tag when needed).
 
 </li>
 <li>Open <kbd>subroutinecode.asm</kbd> and on the very bottom after the last subroutine, create your routine,
@@ -130,9 +131,10 @@ means that in the definition file, it needs to be ordered like this:
 %SetDefine(AnotherSubroutineExample)</pre></td></tr></table><br>
 
 and not this:
-<table><tr><td><pre><font color="red">;[...]
-%SetDefine(AnotherSubroutineExample)
-%SetDefine(SubroutineName)</font></pre></td></tr></table><br>
+<table><tr><td><pre>;[...]
+<font color="red">%SetDefine(AnotherSubroutineExample)</font>	;>Gets assigned to [SubroutineName]
+<font color="red">%SetDefine(SubroutineName)</font>		;>Gets assigned to [AnotherSubroutineExample]
+</pre></td></tr></table><br>
 
 And this:
 <table><tr>
