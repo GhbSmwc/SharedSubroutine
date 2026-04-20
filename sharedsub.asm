@@ -8,9 +8,6 @@
 ;
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-;header
-;lorom
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;SA-1 stuff
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -19,24 +16,27 @@
 	!addr = $0000
 	!sa1 = 0
 	!gsu = 0
-
-if read1($00FFD6) == $15
-	sfxrom
-	!dp = $6000
-	!addr = !dp
-	!gsu = 1
-elseif read1($00FFD5) == $23
-	sa1rom
-	!dp = $3000
-	!addr = $6000
-	!sa1 = 1
-endif
+	!bank = $800000
+	
+	if read1($00FFD6) == $15
+		sfxrom
+		!dp = $6000
+		!addr = !dp
+		!gsu = 1
+		!bank = $000000
+	elseif read1($00FFD5) == $23
+		sa1rom
+		!dp = $3000
+		!addr = $6000
+		!sa1 = 1
+		!bank = $000000
+	endif
 
 
 	!sprite_slots = 12
-if !sa1 != 0
-	!sprite_slots = 22
-endif
+	if !sa1 != 0
+		!sprite_slots = 22
+	endif
 
 macro define_sprite_table(name, name2, addr, addr_sa1)
 if !sa1 == 0
@@ -106,9 +106,9 @@ endmacro
 %define_sprite_table(sprite_custom_num, "7FAB9E", $7FAB9E, $6083)
 
 incsrc "SharedSub_Defines/OtherDefines.asm"
-incsrc "SharedSub_Defines/SubroutineDefs.asm"
+incsrc "SharedSub_Defines/SharedSubroutineDefs.asm"
 
-org !FreespaceU
+org !Freespace_SharedSub_JMLList
 ;^This is the starting address for the subroutines.  All "JSL [insert subroutine here]" commands should
 ; be JSLing to this bank.
 
@@ -119,7 +119,7 @@ endif
 print "JML list memory address range: $", hex(JMLListStart), " to $", hex(JMLListEnd-1), " (", dec(JMLListEnd-JMLListStart), " bytes, last JML location is at $", hex(JMLListEnd-4), ")"
 print "Number of JMLs in list: ", dec((JMLListEnd-JMLListStart)/4)
 
-if (!FreespaceU>>16)&$7F >= $10
+if (!Freespace_SharedSub_JMLList>>16)&$7F >= $10
 	JMLListRatsStart:
 	db "S","T","A","R"					;>[4 bytes] rats tag itself
 	dw JMLListEnd-JMLListStart-1			;>[2 bytes] size-1
@@ -138,7 +138,10 @@ print "-------------------------------------------------------------------------
 ;to ensure that none of them get overwritten by other programs that modify the ROM.
 
 JMLListStart: ;>The start byte-address of the RATS
-;Note: The order of this JML list must match with the defines list (the [%SetDefine(RoutineName)]).
+
+;Syntax: autoclean JML RoutineDefineName
+
+;Note: The order of this JML list must match with the defines list (the [%SetSharedSubDefine(RoutineName)]).
 
 ; general
 autoclean JML FindFreeUploadSlot		; find a free slot for the DMA setup routine
@@ -196,7 +199,7 @@ autoclean JML CustSolidSpriteRtA		; custom solid block/platform sprite interacti
 autoclean JML LoseYoshi				; make Yoshi run away
 
 JMLListEnd: ;>The byte-address +1 from the last byte.
-;^Don't items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
+;^Don't have items after this label, otherwise stuff past here is not protected by RATS and Asar information display will be off.
 freecode
 
 incsrc subroutinecode.asm

@@ -1,20 +1,71 @@
 <html>
 	<head>
 		<style>
+			html {
+			background-color: #101010;
+			color: rgb(221, 221, 221);
+			font-family: sans-serif;
+			}
+			
 			table, th, td {
-				border: 1px solid black;
-				border-collapse: collapse;
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			abbr{cursor: help;}
+			img.img-hor {
+				-moz-transform: scaleX(-1);
+				-o-transform: scaleX(-1);
+				-webkit-transform: scaleX(-1);
+				transform: scaleX(-1);
+				filter: FlipH;
+				-ms-filter: "FlipH";
+			}
+			div.CodeBlock {
+				overflow: auto;
+				width: 1000px;
+				border: 1px solid white;
+				resize: both;
+				background-color: #101010;
+			}
+			pre {
+				margin: 0px;
+			}
+			*.FixedWidth {
+				font-family: monospace;
+			}
+			
+			*.NoLineBreak {
+				font-family: monospace;
+				white-space: pre;
+			}
+			*.Center {
+				text-align: center;
+			}
+			
+			li {
+				padding: 5px;
+			}
+			tr.RedBackground {
+				background-color: #400000;
 			}
 		</style>
 	</head>
-<body>
+<body style="max-width: 1000px; margin: auto; padding: 15px">
 
 <a href="../Readme.html#RoutinePort">Back</a>
-<center><h1>Porting Subroutines with defines to the shared subroutines patch.</h1></center>
-
-<ol>
-<li>Perhaps you want to move this simple example code to the shared subroutines patch:
-<table><tr><td><pre>!Define0 = $60
+<center><h1>Porting subroutines</h1></center>
+<div>
+	Table of contents:
+	<ul>
+		<li><a href="#JMPTo_UpdateDefines" id="ToC_UpdateDefines">Updating defines</a></li>
+		<li><a href="#JMPTo_FixLabels" id="ToC_FixLabels">Fix labels</a></li>
+	</ul>
+</div>
+<hr>
+	<h2><a href="#ToC_UpdateDefines" id="JMPTo_UpdateDefines">^</a>Updating defines</h2>
+	Perhaps you want to move this simple example code to the shared subroutines patch:
+<div class="CodeBlock"><pre>!Define0 = $60
 !Define1 = $61
 !Define2 = $62
 !Define3 = $63
@@ -29,24 +80,23 @@ MyRoutine123:
 	STA !Define2
 	LDA #$04
 	STA !Define3
-	RTL</pre></td></tr></table>
-Pretty simple! just copy the whole thing, making sure nothing unrelated modifies the values in the defines in between whats sets them (top) and the codes that uses them
-(this happens if 2 or more patches happens to have defines with the same name, like for example, player HP is defined <kbd>!Health = $60</kbd> and a sprite using the same
-define, <kbd>!Health = $7C</kbd>).
-Of course, the same applies if the defines are in a separate file and uses <kbd>incsrc "&lt;path&gt;"</kbd> (includes &ldquo;source file&rdquo;)<br><br>
-
-defines.asm:
-<table><tr><td><pre>!Define0 = $60
+	RTL</pre></div>
+	Pretty simple! just copy the whole thing, making sure nothing unrelated modifies the defines in between whats sets them (top) and the codes that uses them
+	(this happens if 2 or more patches happens to have defines with the same name, like for example, player HP is defined <kbd>!Health = $60</kbd> and a sprite using the same
+	define, <kbd>!Health = $7C</kbd>).
+	Of course, the same applies if the defines are in a separate file and uses <kbd>incsrc "&lt;path&gt;"</kbd> (includes &ldquo;source file&rdquo;)<br><br>
+	
+	defines.asm:
+<div class="CodeBlock"><pre>!Define0 = $60
 !Define1 = $61
 !Define2 = $62
-!Define3 = $63</pre></td></tr></table><br><br>
+!Define3 = $63</pre></div><br><br>
+	AnotherDefinesFile.asm:
+<div class="CodeBlock"><pre>!AnotherDefine0 = $7C
+!AnotherDefine1 = $87</pre></div><br>
 
-AnotherDefinesFile.asm:
-<table><tr><td><pre>!AnotherDefine0 = $7C
-!AnotherDefine1 = $87</pre></td></tr></table><br>
-
-Routine code:
-<table><tr><td><pre>incsrc "defines.asm"
+	Routine code:
+<div class="CodeBlock"><pre>incsrc "defines.asm"
 incsrc "AnotherDefinesFile.asm" ;>In the case you have an ASM resource with defines being in different ASM files.
 MyRoutine123:
 	LDA #$01
@@ -67,19 +117,58 @@ MyRoutine123:
 	SEC
 	SBC #$05
 	STA !AnotherDefine1
-	RTL</pre></td></tr></table>
-If you have another subroutine that uses the same defines as the other, place the defines or the &ldquo;include source&rdquo; before ALL (on top) of them so you don't get errors.</li><br>
+	RTL</pre></div>
+	<p>If you have another subroutine that uses the same defines as the other, place the defines or the &ldquo;include source&rdquo; before ALL (on top) of them so you don't get errors.</p>
 
-<li>However, not all patches have conveniently named defines, resulting variables in them to be altered when they get redefined, often when two unrelated codes use the same
-define, for example: just <kbd>!Health</kbd> is set to be a value of <kbd>$60</kbd>, another and later <kbd>!Health</kbd> is set to <kbd>$0F3A</kbd>. As asar process the ASM files in a sequential analysis,
-<kbd>!Health</kbd> will contain a value of whats last sets it every time. With such a name, this is bad as that the naming term could be used for completely different purposes (is this for enemy or player?
-Better to use name terms like <kbd>!RAM_PlayerHealth</kbd> and <kbd>!RAM_EnemyHealth</kbd>. To fix this issue,
-its best to edit their defines in their original ASM file (and in the defines file if present), then move them to here (so you don't accidentally edit other existing codes in the shared patch).
-If multiple ASM files and/or resources intentionally use the same define name (often with the same default value), such as the ground pound patch and a block in the blocks section that
-interacts with ground pound, make sure ALL of them are renamed for a more specific term.<br><br>
+	<p>However, not all patches have conveniently named defines, resulting variables in them to be altered when they get redefined, often when two unrelated codes use the same
+	define, for example: just <kbd>!Health</kbd> is set to be a value of <kbd>$60</kbd>, another and later <kbd>!Health</kbd> is set to <kbd>$0F3A</kbd>. As asar process the ASM files in a sequential analysis,
+	<kbd>!Health</kbd> will contain a value of whats last sets it every time. With such a name, this is bad as that the naming term could be used for completely different purposes (is this for enemy or player?
+	Better to use name terms like <kbd>!RAM_PlayerHealth</kbd> and <kbd>!RAM_EnemyHealth</kbd>. To fix this issue,
+	its best to edit their defines in their original ASM file (and in the defines file if present), then move them to here (so you don't accidentally edit other existing codes in the shared patch).
+	If multiple ASM files and/or resources intentionally use the same define name (often with the same default value), such as the ground pound patch and a block in the blocks section that
+	interacts with ground pound, make sure ALL of them are renamed for a more specific term.</p>
+	
+	<p>Renaming the defines can easily be done using a text editor of your choice (I recommend using notepad++) and replace (CTRL+H), then carefully replace all of them by pressing &ldquo;replace&rdquo;
+	(I recommend replacing one at a time and paying attention to how it is highlighted, not to be recommended to &ldquo;replace all&rdquo; for a fast edit because the &ldquo;find&rdquo; mechanism
+	may find sequence of characters within a different define, like searching for &ldquo;<kbd>!Freeram_test</kbd>&rdquo; could point to <kbd><u>!Freeram_test</u>2</kbd> when you are looking for
+	just <kbd>!Freeram_test</kbd>).</p>
+<hr>
+<h2><a href="#ToC_FixLabels" id="JMPTo_FixLabels">^</a>Fix labels</h2>
+	<p>Subroutines found in ASM files in pixi, Gopher Popcorn Stew (GPS), uberasm tool, and others often uses macros to call them. And because of label leaks, they need to use <kbd>?MacroLabel</kbd> and <kbd>?.MacroSubLabel</kbd>s. In these
+	cases, simply copy the entire code, paste them in a temporary blank text area, and use notepad++'s (or any text editor with such a feature) replace feature (<kbd>CTRL+H</kbd>) with its search mode set to &ldquo;Regular Expression&rdquo; and do this:<br><br>
+	Find:
+<div class="CodeBlock"><pre>\?(\.*[a-zA-Z\d]+)</pre></div>
+	Replace with (all of them, but make sure you check what's being found in case it matches something you don't intend to replace):
+<div class="CodeBlock"><pre>\1</pre></div><br>
+	Then copy that converted labels code, and paste it in the shared subroutine's code.</p>
+<script>
+//These makes all <pre>...</pre> have an effect that double-clicking will select all the text
+//in it, to make it easy to copy code and paste it in your ASM stuff.
+//
+//Credit:
+// https://keestalkstech.com/2014/04/click-to-select-all-on-the-pre-element/
+// https://www.sanwebe.com/2014/04/select-all-text-in-element-on-click
+document.addEventListener('dblclick', e => {
+  let pre = getClosest(e.target, "PRE");
+  if (pre && e.ctrlKey) {
+    let range = new Range();
+    range.selectNodeContents(pre);
+    document.getSelection().removeAllRanges();
+    document.getSelection().addRange(range);
+  }
+});
 
-Renaming the defines can easily be done using a text editor of your choice (I recommend using notepad++) and replace (CTRL+H), then carefully replace all of them by pressing &ldquo;replace&rdquo;
-(I recommend replacing one at a time and paying attention to how it is highlighted, not to be recommended to &ldquo;replace all&rdquo; for a fast edit because the &ldquo;find&rdquo; mechanism
-may find sequence of characters within a different define, like searching for &ldquo;<kbd>!Freeram_test</kbd>&rdquo; could point to <kbd><u>!Freeram_test</u>2</kbd> when you are looking for
-just <kbd>!Freeram_test</kbd>).</li>
-</ol>
+function getClosest(el, tagName) {
+  tagName = tagName && tagName.toUpperCase();
+
+  if (!tagName || !el)
+    return null;
+
+  do
+    if (el.nodeName === tagName)
+      return el;
+  while (el = el.parentNode);
+
+  return null;
+}
+</script>

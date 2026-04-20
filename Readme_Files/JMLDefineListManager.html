@@ -1,0 +1,492 @@
+<html>
+	<head>
+		<style>
+			html {
+			background-color: #101010;
+			color: rgb(221, 221, 221);
+			font-family: sans-serif;
+			}
+			
+			table, th, td {
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			abbr{cursor: help;}
+			img.img-hor {
+				-moz-transform: scaleX(-1);
+				-o-transform: scaleX(-1);
+				-webkit-transform: scaleX(-1);
+				transform: scaleX(-1);
+				filter: FlipH;
+				-ms-filter: "FlipH";
+			}
+			div.CodeBlock {
+				overflow: auto;
+				width: 1000px;
+				border: 1px solid white;
+				resize: both;
+				background-color: #101010;
+			}
+			pre {
+				margin: 0px;
+			}
+			*.FixedWidth {
+				font-family: monospace;
+			}
+			
+			*.NoLineBreak {
+				font-family: monospace;
+				white-space: pre;
+			}
+			*.Center {
+				text-align: center;
+			}
+			
+			li {
+				padding: 5px;
+			}
+			tr.RedBackground {
+				background-color: #400000;
+			}
+			textarea.PlainText {
+				white-space: pre;
+				overflow-wrap: normal;
+				overflow-x: scroll;
+				width: 1000px;
+				height: 250px;
+			}
+			select {
+				font-family: monospace;
+			}
+			textarea.Output {
+				white-space: pre;
+				overflow-wrap: normal;
+				overflow-x: scroll;
+				background-color: #000000;
+				width: 500px;
+				height: 400px;
+				color: rgb(221, 221, 221);
+			}
+			input {
+				font-family: monospace;
+			}
+		</style>
+	</head>
+<body style="max-width: 1000px; margin: auto; padding: 15px">
+<a href="../Readme.html#QuickLinks_JMLDefineListManager">Back (to quick links)</a><br>
+<a href="../Readme.html#JMLDefineListManager_back">Back</a>
+<p>Note: This does not handle multi-line operator or single-line operator. Each line must contain up to one item.</p>
+<p>This tool takes a given list of subroutine names (in any of the 3 formats, see below), and convert them into shared subroutines format.
+Features include:
+<ul>
+	<li>Generating both labels and defines in the same order (to prevent incorrect define assign to the wrong JML).</li>
+	<li>Scan for label/define duplicate/reuse.</li>
+	<li>Generate placeholder JML items and defines to prevent 3rd party patches from occupying a area of memory that will expectedly be used for the JML list.</li>
+</ul>
+</p>
+<p>Accepted formats are:
+<table>
+	<tr>
+		<th>Just the names</th>
+		<th>JML list format</th>
+		<th>define list format</th>
+	</tr>
+	<tr>
+		<td>
+<pre>SubroutineName1
+SubroutineName2
+SubroutineName3</pre>
+		</td>
+		<td>
+<pre>autoclean JML SubroutineName1
+autoclean JML SubroutineName2
+autoclean JML SubroutineName3</pre>
+		</td>
+		<td>
+<pre>%SetSharedSubDefine(SubroutineName1)
+%SetSharedSubDefine(SubroutineName2)
+%SetSharedSubDefine(SubroutineName3)</pre>
+		</td>
+	</tr>
+</table>
+
+</p>
+<kbd>!Freespace_SharedSub_JMLList = $</kbd></kbd><input type="text" value="128000" class="NumberHexInput" onchange="CorrectHexAddress(); Process();" id="Input_StartingJMLAddress"> (NOTE: Does not account for bank borders or memory regions)<br>
+<textarea class="PlainText" id="UserInput" oninput="InputUpdated(); Process()"></textarea>
+<div id="Output_SharedNames" hidden>
+	<p><span style="color: yellow;">Routines having the same name detected!</span> This works fine if two calls point to the same routine, but may cause issues with the defines as they can conflict (will be the value of what's last sets them).
+	The exception to this are placeholders, which you won't be using.</p>
+	<textarea id="ReuseNameLog" class="Output" style="width: 1000px; height: 100px;" readonly></textarea><br><br>
+</div>
+<div id="Output">
+	<table>
+		<tr>
+			<td colspan="2">
+				Sort: <select onchange="DisableReverse(); Process()">
+					<option id="SortOption_None">None</option>
+					<option id="SortOption_Alphabetically">Alphabetically</option>
+				</select><label><input type="checkbox" id="Sort_Reverse" onchange="Process()" disabled>Reverse</label><br>
+				Number of JMLs you plan to have in the future: <input type="number" id="TargetJMLListSize" onchange="CorrectNumberInput(); InputUpdated(); Process();" value="100" min="0"><br>
+				<div><label><input type="checkbox" onchange="Process();" id="Setting_DisplayEachJMLInfo">Display address and nth JML position info as comments</label></div>
+				<div><label><input type="checkbox" onchange="Process();" id="Setting_DefinePrependSharedSub" checked>Defines have &ldquo;<kbd>SharedSub_</kbd>&rdquo; prepended in their names to reduce the risk of name conflicts.</label></div>
+				<div id="MoreJMLsThanExpectedMEssage" style="color: yellow; height: 32px;"></div>
+			</td>
+		</tr>
+		<tr>
+			<th>JML list</th>
+			<th>Macro define list</th>
+		</tr>
+		<tr>
+			<td>
+				<textarea class="Output" readonly id="Output_JMLList"></textarea><br>
+				<div>
+					<button onclick="setClipboard(document.getElementById('Output_JMLList').value)">Copy</button><span></span>
+				</div>
+				
+			</td>
+			<td>
+				<textarea class="Output" readonly id="Output_DefineList"></textarea>
+				<div>
+					<button onclick="setClipboard(document.getElementById('Output_DefineList').value)">Copy</button><span></span>
+				</div>
+			</td>
+		</tr>
+		<tr>
+			<td colspan="2">
+				<table style="font-family: monospace;">
+					<tr>
+						<td>Number of JMLs</td>
+						<td id="Statistic_JMLCount"></td>
+					</tr>
+					<tr>
+						<td>Memory layout</td>
+						<td><pre id="Statistic_JMLListLayout"></pre></td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</div>
+<div id="Output_Error" hidden>
+	<textarea id="ErrorLog" class="Output" style="width: 1000px"></textarea>
+</div>
+<script>
+	let NeedToLongUpdate = false
+	function InputUpdated() {
+		NeedToLongUpdate = true
+	}
+	
+	function DisableReverse() {
+		document.getElementById("Sort_Reverse").disabled = event.target.selectedIndex == false
+	}
+	let InputList = [];
+	let TargetJMLSize = 100n;
+	[...document.querySelectorAll("*.NumberHexInput")].forEach(HTMLElement => {
+		HTMLElement.addEventListener(
+			"keydown",
+			function (e) {
+				let PressedKey = e.key
+				let HTMLElementInteracted = event.target
+				
+				let Value = 0n
+				try {
+					Value = BigInt("0x" + HTMLElementInteracted.value)
+				} catch {}
+				if (PressedKey == "ArrowUp" || PressedKey == "ArrowDown") {
+					//^Only update the text field if arrowup/arrowdown are pressed
+					if (PressedKey == "ArrowUp") {
+						e.preventDefault()
+						Value++
+					} else if (PressedKey == "ArrowDown") {
+						Value--
+					}
+					HTMLElementInteracted.value = Value.toString(16).toUpperCase().padStart(4, "0")
+					
+					HTMLElementInteracted.onchange()
+				}
+			}
+		);
+	});
+	function CorrectHexAddress() {
+		let Value = 0n 
+		try {
+			Value = BigInt("0x" + event.target.value)
+		} catch {}
+		if (Value < 0n) {
+			Value = 0n
+		}
+		if (Value > BigInt("0xFFFFFF")) {
+			Value = BigInt("0xFFFFFF")
+		}
+		event.target.value = Value.toString(16).toUpperCase().padStart(6, "0")
+	}
+	Process()
+	function CorrectNumberInput() {
+		let Value = 0n
+		try {
+			Value = BigInt(event.target.value)
+		} catch {}
+		event.target.value = Value.toString(10)
+		TargetJMLSize = Value
+	}
+	function Process() {
+		if (NeedToLongUpdate) {
+			InputList = (document.getElementById("UserInput").value)
+			.split("\n")
+			.map((Element, Index) => {
+				return {
+					LineNumber: Index+1,
+					Text: Element
+				}
+			});
+			
+			let AllItemsValid = true
+			
+			InputList = InputList.map(Element => {
+				let ProcessedText = Element.Text.replace(/;.*$/, "")
+				.replace(/^\s*/, "")
+				.replace(/\s*$/, "")
+				
+				let Comment = ""
+				try {
+					Comment = Element.Text.match(/;.*$/)[0].replace(/^;/, "")
+				} catch {};
+				if ((/^[a-zA-Z_]+[a-zA-Z_\d]*$/).test(ProcessedText)) { //Just the names
+					let ConvertedText = ProcessedText.match(/^[a-zA-Z_]+[a-zA-Z_\d]*$/)[0]
+					return {
+						LineNumber: Element.LineNumber,
+						SubroutineName: ConvertedText,
+						Comment: Comment,
+						ReusedNameLineNumbers: [],
+						Type: "Valid"
+					}
+				} else if ((/autoclean (?:JML|jml) [a-zA-Z_]+[a-zA-Z_\d]*$/).test(ProcessedText)) { //JML list format
+					let SubroutineName = ProcessedText.replace(/autoclean (?:JML|jml) /, "")
+					return {
+						LineNumber: Element.LineNumber,
+						SubroutineName: SubroutineName,
+						Comment: Comment,
+						ReusedNameLineNumbers: [],
+						Type: "Valid"
+					}
+				} else if ((/%SetSharedSubDefine\([a-zA-Z_]+[a-zA-Z_\d]*\)$/).test(ProcessedText)) { //Define list format
+					let SubroutineName = ProcessedText.replace(/%SetSharedSubDefine\(/, "")
+					.replace(/\)/, "")
+					return {
+						LineNumber: Element.LineNumber,
+						SubroutineName: SubroutineName,
+						Comment: Comment,
+						ReusedNameLineNumbers: [],
+						Type: "Valid"
+					}
+				} else if ((/^\s*$/).test(ProcessedText)) {
+					return {
+						LineNumber: Element.LineNumber,
+						Type: "BlankLine"
+					}
+				} else {
+					AllItemsValid = false
+					return {
+						LineNumber: Element.LineNumber,
+						Text: Element.Text,                   //>Exact text, and best not to call it a "SubroutineName"
+						Type: "Invalid"
+					}
+				}
+			});
+			document.getElementById("Output").hidden = !AllItemsValid
+			document.getElementById("Output_SharedNames").hidden = !AllItemsValid
+			document.getElementById("Output_Error").hidden = AllItemsValid
+			if (!AllItemsValid) {
+				let BadList = InputList.filter(Element => Element.Type == "Invalid")
+				let ErrorLogText = ""
+				ErrorLogText += "Error! Following lines are invalid:\n"
+				BadList.forEach((Element, Index, Arr) => {
+					ErrorLogText += "Line " + Element.LineNumber.toString(10) + ": [" + Element.Text + "] Invalid syntax."
+					if (Index != Arr.length-1) {
+						ErrorLogText += "\n"
+					}
+				})
+				document.getElementById("ErrorLog").value = ErrorLogText
+				return
+			}
+			InputList = InputList.filter(Element => Element.Type != "BlankLine")
+			
+			//Find two or more subroutines with the same name
+			{
+				let ReusedNamesExists = false
+				let l = InputList.length
+				for (let i=0; i<l; i++) {
+					let Subroutine1 = InputList[i]
+					for (let j=i+1; j<l; j++) {
+						let Subroutine2 = InputList[j]
+						if (Subroutine1.SubroutineName == Subroutine2.SubroutineName) {
+							ReusedNamesExists = true
+							Subroutine1.ReusedNameLineNumbers.push(Subroutine2.LineNumber)
+							Subroutine2.ReusedNameLineNumbers.push(Subroutine1.LineNumber)
+						}
+					}
+				}
+				document.getElementById("Output_SharedNames").hidden = !ReusedNamesExists
+				let SharedNamesList = InputList.filter(Element => {
+					if (Element.Type != "Valid") {
+						return false
+					}
+					if (Element.ReusedNameLineNumbers.length == 0) {
+						return false
+					}
+					return true
+				})
+				
+				let SharedNameListText = ""
+				SharedNamesList.forEach((Element, Index, Arr) => {
+					SharedNameListText += "Line " + Element.LineNumber + ": Subroutine [" + Element.SubroutineName + "] have same name(s) at line(s): "
+					Element.ReusedNameLineNumbers.forEach((Element2, Index2, Arr2) => {
+						SharedNameListText += Element2.toString(10)
+						if (Index2 != Arr2.length-1) {
+							SharedNameListText += ", "
+						}
+					})
+					if (Index != Arr.length-1) {
+						SharedNameListText += "\n"
+					}
+				});
+				document.getElementById("ReuseNameLog").value = SharedNameListText
+			}
+			NeedToLongUpdate = false
+		}
+		let InputList_ShallowCopy = [...InputList]
+		let SortReverseFlag = 1
+		if (document.getElementById("Sort_Reverse").checked) {
+			SortReverseFlag = -1
+		}
+		if (document.getElementById("SortOption_Alphabetically").selected) {
+			InputList_ShallowCopy.sort((a, b) => {
+				if (a.SubroutineName === b.SubroutineName) {
+					return 0
+				}
+				return ((a.SubroutineName < b.SubroutineName) ? -1 : 1)*SortReverseFlag
+			})
+		}
+		//Get remaining JMLs to add to reserve space
+		let RemainingJMLsToAdd = TargetJMLSize - BigInt(InputList_ShallowCopy.length)
+		{
+			let OriginalListLength = InputList_ShallowCopy.length
+			if (OriginalListLength < Number(TargetJMLSize)) { //If entered JMLs less than planned number of JMLs...
+				InputList_ShallowCopy.length = Number(TargetJMLSize) //Then set the array to the length = to planned number
+			}
+			InputList_ShallowCopy = InputList_ShallowCopy.fill({ //Fill out the space between the last JML the user entered and the nth item that is the planned number of JMLs.
+				SubroutineName: "Placeholder",
+				Type: "SpacePadding",
+				Comment: "Dummy JSL to reserve space."
+			}, OriginalListLength, Number(TargetJMLSize))
+		}
+		let NumberOfJMLs = BigInt(InputList_ShallowCopy.length)
+		document.getElementById("Statistic_JMLCount").textContent = NumberOfJMLs.toString(10)
+		
+		let StartingJMLAddress = BigInt("0x" + document.getElementById("Input_StartingJMLAddress").value)
+		let CurrentAddress = StartingJMLAddress
+		let AddressRangeText = ""
+		let RatsTagSize = 0n
+		if (((StartingJMLAddress>>16n)&BigInt("0x7F")) >= BigInt("0x10")) {
+			RatsTagSize = 8n
+			AddressRangeText += "$" + CurrentAddress.toString(16).toUpperCase().padStart(6, "0") + "~$" + (CurrentAddress+RatsTagSize-1n).toString(16).toUpperCase().padStart(6, "0") + " ;>RATS tag (8 bytes)\n"
+			CurrentAddress += RatsTagSize
+		}
+		AddressRangeText += "$" + CurrentAddress.toString(16).toUpperCase().padStart(6, "0") + "~$" + (CurrentAddress+(NumberOfJMLs*4n)-1n).toString(16).toUpperCase().padStart(6, "0") + " ;>JML list (" + (NumberOfJMLs*4n).toString(10) + " bytes)\n"
+		CurrentAddress += NumberOfJMLs*4n
+		AddressRangeText += "Total bytes: " + (CurrentAddress-StartingJMLAddress).toString(10)
+		document.getElementById("Statistic_JMLListLayout").textContent = AddressRangeText
+		if (RemainingJMLsToAdd < 0n) {
+			document.getElementById("MoreJMLsThanExpectedMEssage").textContent = "There are " + (RemainingJMLsToAdd*-1n).toString(10) + " more JML(s) than what you've planned. Be careful when re-applying Shared Subroutines patch as a 3rd party patch may be placed after the last JML and get overwritten."
+		} else {
+			document.getElementById("MoreJMLsThanExpectedMEssage").textContent = ""
+		}
+		let OutputJMLListText = ""
+		let OutputDefineListText = ""
+		let CurrentJMLLocation = BigInt("0x" + document.getElementById("Input_StartingJMLAddress").value) + RatsTagSize
+		InputList_ShallowCopy.forEach((Element, Index, Arr) => {
+			let String_StartAddress = CurrentJMLLocation.toString(16).padStart(6, "0").toUpperCase()
+			let String_NthJMLPosition = (Index+1).toString(10)
+		
+			OutputJMLListText += "autoclean JML " + Element.SubroutineName + "\t\t;"
+			OutputDefineListText += "\t\t%SetSharedSubDefine("
+			if (document.getElementById("Setting_DefinePrependSharedSub").checked) {
+				OutputDefineListText += "SharedSub_"
+			}
+			OutputDefineListText += Element.SubroutineName + ")\t\t;"
+			if (document.getElementById("Setting_DisplayEachJMLInfo").checked) {
+				OutputJMLListText += "[$" + String_StartAddress + ", JML #" + String_NthJMLPosition + "] "
+				OutputDefineListText += "[$" + String_StartAddress + ", JML #" + String_NthJMLPosition + "] "
+			}
+			OutputJMLListText += Element.Comment
+			OutputDefineListText += Element.Comment
+			CurrentJMLLocation += 4n
+			if (Index != Arr.length-1) {
+				OutputJMLListText += "\n"
+				OutputDefineListText += "\n"
+			}
+		})
+		document.getElementById("Output_JMLList").value = OutputJMLListText
+		document.getElementById("Output_DefineList").value = OutputDefineListText
+	}
+	
+	function DeleteCopyMessage(HTMLElement) {
+		HTMLElement.textContent = ""
+	}
+	
+	function setClipboard(String) {
+		//Credit goes to Mozilla: https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/write
+		const type = "text/plain";
+		const blob = new Blob([String], { type });
+		const data = [new ClipboardItem({ [type]: blob })];
+		
+		let EventElement = event.target
+		let CopiedMessage = EventElement.parentNode.querySelector("span")
+	
+		navigator.clipboard.write(data).then(
+			((EventElement) => {
+			/* success */
+				CopiedMessage.textContent = "Copied!"
+				CopiedMessage.style.color = "#00FF00"
+				setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+			}).bind(null, EventElement),
+			((EventElement) => {
+			/* failure */
+				CopiedMessage.textContent = "Failed!"
+				CopiedMessage.style.color = "#FF0000"
+				setTimeout(DeleteCopyMessage.bind(null, CopiedMessage), 1500)
+			}).bind(null, EventElement)
+		);
+	}
+	
+//These makes all <pre>...</pre> have an effect that double-clicking will select all the text
+//in it, to make it easy to copy code and paste it in your ASM stuff.
+//
+//Credit:
+// https://keestalkstech.com/2014/04/click-to-select-all-on-the-pre-element/
+// https://www.sanwebe.com/2014/04/select-all-text-in-element-on-click
+document.addEventListener('dblclick', e => {
+  let pre = getClosest(e.target, "PRE");
+  if (pre && e.ctrlKey) {
+    let range = new Range();
+    range.selectNodeContents(pre);
+    document.getSelection().removeAllRanges();
+    document.getSelection().addRange(range);
+  }
+});
+
+function getClosest(el, tagName) {
+  tagName = tagName && tagName.toUpperCase();
+
+  if (!tagName || !el)
+    return null;
+
+  do
+    if (el.nodeName === tagName)
+      return el;
+  while (el = el.parentNode);
+
+  return null;
+}
+</script>

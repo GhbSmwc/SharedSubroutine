@@ -1,10 +1,38 @@
-5 items in the main directory (in case if a file is missing)
-;
 Note: Date sorted from newest to oldest  (M/D/Y). Version number period symbol means
 a sub-version (like a chapter number), NOT a decimal point (goes like this 1.8, 1.9,
 1.10... and not 1.8, 1.9 2.0...). 
 
 Format: M/D/Y date format, list ordered from recent to oldest.
+4/20/2026 - 2.4.2 - Renaming "SubroutineDefs.asm" to "SharedSubroutineDefs.asm"
+ -Renamed the definition file to a specific type of ASM resource to reduce confusion.
+9/12/2025 -2.4.1 - Anti-patch added for relocating shared subroutines.
+ -Added an anti-patch.
+9/5/2025 -2.4 - Minor update
+ -Fixed depreciation warnings.
+ -FastROM addressing now uses "|!bank" rather than "!F". This makes it standard for sa-1 hybrids.
+ -Macro define subroutine name update:
+ --Instead of first offsetting the address then set the define at that offsetted location, it now
+   set the define intuitively at the current location, then offset for the next define to set to.
+   This also makes it no longer necessary for the first JML define to be manually set via
+   "!JMLListStart".
+ --Renamed macro "SetDefine" to "SetSharedSubDefine". Not a safe idea to have generic names that
+   cannot be re-defined or overwritten.
+ -Added a failsafe for potential macro redefinition warning/errors, due to a bug that asar's
+  includeonce isn't foolproof when two ASM files incsrcs to the same ASM file with different
+  paths. See this: https://github.com/RPGHacker/asar/issues/287
+ -Modernized the readme file. Dark background and white text, along with making code selection
+  easy to copy via CTRL+double click.
+ -Readme/RoutinePorting.html includes on how to convert ASM tools' routines to a format that works
+  on shared subroutines (tools' routines are often macro-based and uses macrolabels to preventing
+  labels from leaking).
+ -Added note on that subroutines included may be out of date.
+ -Better explained why a crash happens if you apply Shared Subroutines, a 3rd-party patch that
+  needs freespace, then Shared Subroutines with a longer JML list.
+ -Added a JavaScript HTML file that automatically handles the JML and macro define list, along
+  with detecting reused names and generating placeholder to reserve space to prevent other
+  patches from occupying that area.
+ -Renamed "!FreespaceU" to "!Freespace_SharedSub_JMLList" because again, generic names have a
+  higher risk of it conflicting with other 3rd party ASM.
 3/27/2019 -2.3
  -Removed several JSL !Defines in subroutinecode.asm and converted them to jump to the routines
   directly since both codes and labels are in the same file and ASAR won't error out saying

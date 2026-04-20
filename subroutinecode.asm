@@ -1,5 +1,18 @@
-@includefrom "../sharedsub.asm"
+includefrom "../sharedsub.asm"
 
+;These are the subroutines themselves, in a freespace.
+;You can call other subroutines directly from a subroutine
+;here safely as asar will recognize since they're in the same
+;included file(s). What you cannot safely do is JSL'ing directly
+;to these subroutines outside this patch.
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;Subroutine placeholder
+;This is if you plan on re-patching shared subroutines
+;with more subroutines.
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Placeholder:
+	RTL
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
 ; slot finder for the custom DMA setup routine (when necessary)
@@ -326,7 +339,7 @@ ChangeMap16:
 	PHK
 	PEA.w .Map16Return-$01
 	PEA $804C
-	JML $00C0FB!F
+	JML $00C0FB|!bank
 .Map16Return
 	PLB
 	PLP
@@ -358,9 +371,9 @@ FindMap16TileNum:
 	PLA
 	LDX $01
 	CLC
-	ADC $00BA60!F,x
+	ADC $00BA60|!bank,x
 	STA $05
-	LDA $00BA9C!F,x
+	LDA $00BA9C|!bank,x
 	ADC $03
 	STA $06
 	BRA .L1
@@ -368,9 +381,9 @@ FindMap16TileNum:
 	PLA
 	LDX $03
 	CLC
-	ADC $00BA80!F,x
+	ADC $00BA80|!bank,x
 	STA $05
-	LDA $00BABC!F,x
+	LDA $00BABC|!bank,x
 	ADC $01
 	STA $06
 .L1
@@ -399,10 +412,10 @@ FindMap16ActsLike:
 .Loop
 	REP #$20
 	ASL
-	ADC $06F624!F
+	ADC $06F624|!bank
 	STA $0D
 	SEP #$20
-	LDA $06F626!F
+	LDA $06F626|!bank
 	STA $0F
 	REP #$20
 	LDA [$0D]
@@ -425,7 +438,7 @@ SubGetItemMemory:
 	PHY
 	JSR ItemMemoryIndexRt
 	LDA ($08),y
-	AND $018000!F,x
+	AND $018000|!bank,x
 	STA $08
 	PLY
 	PLX
@@ -437,7 +450,7 @@ SubSetItemMemory:
 	PHY
 	JSR ItemMemoryIndexRt
 	LDA ($08),y
-	ORA $018000!F,x
+	ORA $018000|!bank,x
 	STA ($08),y
 	PLY
 	PLX
@@ -458,10 +471,10 @@ ItemMemoryIndexRt:
 	LDX $13BE
 	LDA #$F8
 	CLC
-	ADC $0DA8AE!F,x
+	ADC $0DA8AE|!bank,x
 	STA $08
 	LDA #$19
-	ADC $0DA8B1!F,x
+	ADC $0DA8B1|!bank,x
 	STA $09
 	LDA $0C
 	ASL #2
@@ -540,7 +553,7 @@ UploadGFXFileToVRAM:
 	PHY
 	PHX
 	PHP
-	JSL $0FF900!F
+	JSL $0FF900|!bank
 	JSR UploadDataToVRAM_Sub
 	PLP
 	PLX
@@ -1191,10 +1204,10 @@ SetPlayerClipping2:
 	BEQ .Next2
 	INX #2
 .Next2
-	LDA $03B660!F,x
+	LDA $03B660|!bank,x
 	STA $06
 	STZ $07
-	LDA $03B65C!F,x
+	LDA $03B65C|!bank,x
 	REP #$20
 	AND #$00FF
 	CLC
@@ -1861,7 +1874,7 @@ ClusterHurtPlayerMain:
 	BEQ .NoYoshi
 	JMP LoseYoshi_Sub
 .NoYoshi
-	JSL $00F5B7!F
+	JSL $00F5B7|!bank
 	RTS
 
 ;------------------------------------------------
@@ -2039,7 +2052,7 @@ CustSolidSpriteRt:
 .CrushInMiddle
 	PLP
 	BCC .Return
-	JML $00F606!F
+	JML $00F606|!bank
 .Return
 	RTL
 .Platform
@@ -2304,7 +2317,7 @@ CustSolidSpriteRtA:
 .CrushInMiddle
 	PLP
 	BCC .Return
-	JML $00F606!F
+	JML $00F606|!bank
 .Return
 	RTL
 .Platform

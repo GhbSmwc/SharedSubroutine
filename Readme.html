@@ -1,47 +1,108 @@
 <html>
 	<head>
 		<style>
+			html {
+			background-color: #101010;
+			color: rgb(221, 221, 221);
+			font-family: sans-serif;
+			}
+			
 			table, th, td {
-				border: 1px solid black;
-				border-collapse: collapse;
+			border: 1px solid white;
+			border-collapse: collapse;
+			}
+			
+			abbr{cursor: help;}
+			img.img-hor {
+				-moz-transform: scaleX(-1);
+				-o-transform: scaleX(-1);
+				-webkit-transform: scaleX(-1);
+				transform: scaleX(-1);
+				filter: FlipH;
+				-ms-filter: "FlipH";
+			}
+			div.CodeBlock {
+				overflow: auto;
+				width: 1000px;
+				border: 1px solid white;
+				resize: both;
+				background-color: #101010;
+			}
+			pre {
+				margin: 0px;
+			}
+			*.FixedWidth {
+				font-family: monospace;
+			}
+			*.Center {
+				text-align: center;
+			}
+			
+			li {
+				padding: 5px;
+			}
+			tr.RedBackground {
+				background-color: #400000;
+			}
+			input {
+				font-family: monospace;
 			}
 		</style>
 	</head>
-<body>
-
+<body style="max-width: 1000px; margin: auto; padding: 15px">
 <center><h1>Shared Subroutines Patch</h1></center>
 <center><h2>Created and updated by <a href="https://www.smwcentral.net/?p=profile&id=3471">imamelia</a>
-and supported by <a href="https://www.smwcentral.net/?p=profile&id=18802">GreenHammerBro.</a></h2></center>
+and supported by <a href="https://www.smwcentral.net/?p=profile&id=18802">HammerBrother.</a></h2></center>
 
-What this patch does is enable you to have &ldquo;universal availability&rdquo; subroutines
-accessible anywhere in your ROM, and also by other third-party patches/code without the need to
+<p>What this patch does is enable you to have &ldquo;universal availability&rdquo; subroutines
+accessible anywhere in your ROM, and also by other third-party patches, tools, code without the need to
 have duplicate codes that can waste space in your game. The reason for this patch is because
-patches commonly needs a freespace (in the olden days when xkas was popular, you have to
+patches commonly need a freespace (in the olden days when xkas was popular, you have to
 manually set them up, and Asar automatically finds those freespace), thus the code themselves
-have varying locations and isn't safe to have other things call that moving subroutine each
-time the user re-patches them.<br><br>
+can have varying locations each time they are inserted and isn't safe (if other resources calls
+a subroutine at an outdated address, may cause glitches or crashes).</p>
 
-It works by having a list of <kbd>JML</kbd>s in a <i>fixed location</i>. Those <kbd>JML</kbd>s then
-jumps to a freespace block. To call those subroutines anywhere, you <kbd>JSL</kbd> to that <kbd>JML</kbd>
-list instead of the freespace. Each time you patch, only the <kbd>JML</kbd> jump destination and
-the subroutine itself can change, while the <kbd>JML</kbd> themselves stay at the same place. This renders
-the subroutine jump to be stable and won't suddenly jump into now-deleted code which can crash your game.
+<p>It works like this: The game stores a list of <kbd>JML</kbd>s at a <b>fixed location</b>. Each of these <kbd>JML</kbd>s point to subroutines in a freespace. When calling routines, any code from anywhere can <kbd>JSL</kbd> to any of the <kbd>JML</kbd>s on the list,
+which then jumps to the freespace subroutine. If you make changes on the subroutines so that they get relocated on the next re-insert, the <kbd>JML</kbd> list will be corrected and remain at the same location (provided you do not re-patch this with the <kbd>!Freespace_SharedSub_JMLList</kbd> being changed).</p>
+
+<p>Note: To copy text inside of code blocks here, hold down <kbd>CTRL</kbd> and double-click the text.</p>
+<h2>Quick Links</h2>
+<ul>
+	<li><a href="Readme_Files/JMLDefineListManager.html" id="QuickLinks_JMLDefineListManager">JML list manager</a>, for checking for reused labels/defines, correcting the order of routines, etc.</li>
+</ul>
 <h2>What you need</h2>
 <ul>
-<li><a href="https://www.smwcentral.net/?p=section&a=details&id=4611">Slogger</a> (recommended, but a debugger will also work if you find data filled with zeroes or <kbd>FF<kbd>s)</li>
+	<li>A freespace that you manuelly place your JML list. You can use any tool that lets you find freespace. Examples are: <a href="https://www.smwcentral.net/?p=section&a=details&id=4611">Slogger</a> (freespace finder tool), debuggers, hex editors, etc.</li>
 </ul>
-<h2>How to use</h2>
+<h2>Table of Contents</h2>
+<ul>
+	<li><a href="#JMPTo_HowToInsert" id="ToC_HowToInsert">How to insert</a></li>
+	<li><a href="#JMPTo_HowToUse" id="ToC_HowToUse">How to use</a></li>
+	<li><a href="#JMPTo_RelocateJMLList" id="ToC_RelocateJMLList">How to relocate JML list</a></li>
+	<li><a href="#JMPTo_WorkingsDocumentation" id="ToC__WorkingsDocumentation">Workings Documentation</a></li>
+
+</ul>
+<h2><a href="#ToC_HowToInsert" id="JMPTo_HowToInsert">^</a>How to insert</h2>
 <ol>
-<li>Open <kbd>SharedSub_Defines/SubroutineDefs.asm</kbd>, and here, you see a define <kbd>!FreespaceU</kbd>, this is the address to place your JML list (comes with an 8-byte RATS
-tag preceding if needed). Using slogger, you want to make sure that this define points to the <b>beginning</b> location of the freespace (that is big enough), you don't want to
-inadvertently place the list at an area that would overwrite other codes. To find freespace, use slogger (drop your game file on the exe). Mine may look different from yours:
-<table><tr><td><pre>C:\Users\RedBro\Desktop\smw romhacking\Submission\shared_sub\a.smc
+	<li>
+		First thing off, make sure you have a Lunar Magic restore point or backup of your game file before patching this. It's possible you might set the freespace address of the JML list incorrectly or not have enough space
+		and cause your game to crash when running it. If this happens, you can revert your game file to before this occurs and then try patching again with a different address to use.
+	</li>
+	<li>
+		Open <kbd>SharedSub_Defines/SharedSubroutineDefs.asm</kbd>, and here, you see a define <kbd>!Freespace_SharedSub_JMLList</kbd>, this is the address to manually place your <kbd>JML</kbd> list (comes with an 8-byte RATS
+		tag at this location before the list if needed). This must be at a freespace with enough bytes available and at a starting address location of that (it occupies this address and consecutive N bytes after).
+		<h3>Finding freespace</h3>
+		<ul>
+			<li>
+				A method is using slogger to locate freespace, Mine may look different from yours. I drag and drop the game file on the
+				program and it outputted a text file logging the contiguous areas that are unused from the game file:
+<div class="CodeBlock"><pre>C:\Users\UserName\Desktop\smw romhacking\General Tools\slogger\a.smc
 headered
 ROM is 0x100000 bytes long
 
 PC offset		LoROM offset		Size
 
-0x0812C4		0x1090C4		0x6F34
+0x08493C		0x10C73C		0x38BC
 0x090200		0x128000		0x8000
 0x098200		0x138000		0x8000
 0x0A0200		0x148000		0x8000
@@ -56,173 +117,361 @@ PC offset		LoROM offset		Size
 0x0E8200		0x1D8000		0x8000
 0x0F0200		0x1E8000		0x8000
 
-A total of 0x6EF34 bytes of free space were found
+A total of 0x6B8BC bytes of free space were found
 IMPORTANT: The "LoROM Offset" is what is entered in xkas as free space
-</pre></td></tr></table>
-
-Now what you must pay attention to <kbd>LoROM Offset</kbd> and the <kbd>size</kbd>, LoROM offset
-is the starting SNES memory location that is empty, and size the number of bytes. Because each
-JML instruction is 4 bytes long (1 byte for the opcode alone, 3 for the address), the formula of how much space you would need is:
-<table><tr><td><pre>BytesTaken = RatsSpace + (NumberOfJMLs * 4)
+</pre></div><br><br>
+			What's important here is the <kbd>LoROM Offset</kbd> and the <kbd>size</kbd>. <kbd>LoROM Offset</kbd> is the starting SNES memory address location that's empty,
+			and <kbd>size</kbd> is the number of bytes free. Now knowing which one having enough space is important. The amount of bytes we need is:
+<div class="CodeBlock"><pre>BytesTaken = RatsSpace + (NumberOfJMLs * 4)
 
 ;RatsSpace:
-; = 0 if you have !FreespaceU be at banks $00-$0F or $80-$8F
-; = 8 otherwise ($10-$7F or $90-$FF).</pre></td></tr></table>
+; = 0 if you have !Freespace_SharedSub_JMLList be at banks $00-$0F (or $80-$8F using LoROM)
+; = 8 otherwise ($10-$7F (or $90-$FF using LoROM)).</pre></div>
+				<p>In case you don't know, a bank is a byte of the leftmost (or highest) 8-bit value of a 24-bit/3-byte address: the XX in
+				<kbd>$XXyyyy</kbd>.</p>
+	
+				With the example above showing freespace, I choose <kbd>$128000</kbd> (so I set <kbd>!Freespace_SharedSub_JMLList</kbd> to that address number), now look at the left two hex
+				digits, that is bank <kbd>$12</kbd>, and if you haven't added any new routines or remove any, the number of bytes the JML list takes is
+				<kbd class="CodeBlock">208 = 8 + (50 * 4)</kbd>. With <kbd>$128000</kbd> having <kbd>$8000</kbd> (<kbd>32768</kbd>) bytes free, that is enough space to fit the 208-byte JML list in. This results in <kbd>$128000</kbd> to <kbd>$1280CF</kbd> now being occupied.
+				Upon patching <kbd>sharedsub.asm</kbd>, asar will display the memory statistics about the JML list (including the RATs tag when needed).<br><br>
+			</li>
+			<li>
+				To locate freespace without slogger (especially if you're using SA-1 ROM, which may have issues), another method is to create a dummy ASM file with the following text and patching with Asar so that it searches freespace with enough space for you
+				(tested on Asar version 1.91) and showing the address:
+<div class="CodeBlock"><pre>!NumberOfJMLs = 100
+	;^The number of JMLs you expect to have. No prefix is decimal.
 
-In case you don't know, a bank is a byte of the leftmost (or highest) 8-bit value of a 24-bit address: the XX in
-$XXyyyy.<br><br>
-
-With the example above, I choose <kbd>$128000</kbd> (so I set <kbd>!FreespaceU</kbd> to that address number), now look at the left two hex
-digits, that is bank $12, and if you haven't added any new routines or remove any, the number of bytes the JML list takes is
-<kbd>208 = 8 + (50 * 4)</kbd>. Therefore the address range would be  $128000 to $1280CF. Assuming you are an average user, I recommend picking a freespace that is at least $4000 (16384 decimal) bytes large.
-Upon patching <kbd>sharedsub.asm</kbd>, asar will display the memory statistics about the JML list (including the RATs tag when needed).
-
-</li>
-<li>Open <kbd>subroutinecode.asm</kbd> and on the very bottom after the last subroutine, create your routine,
-here is a simple example:
-<table><tr><td><pre>MyRoutine123:
+	;Auto calculate the amount of bytes needed
+		!NumberOfBytesNeeded #= !NumberOfJMLs*4
+freecode
+Test:
+	fillbyte $00
+	fill !NumberOfBytesNeeded
+	print "Freespace with enough bytes is at $", hex(Test-8)
+		;^Minus 8 because the address defined as !Freespace_SharedSub_JMLList would be the beginning of the RATS tag. Stuff under
+		; "freecode" would be placed at the beginning of the freespace plus 8.
+		;
+		; This also means that asar looks for a freespace that is at least DataSizeInFreespace+8, where DataSizeInFreespace is
+		; the amount of bytes of anything under "freecode", and +8 because it includes the RATS tag.</pre>
+</div><br>
+				Once asar runs this, it will display the <kbd>print</kbd> command text with the address you can use (copy that), along with a warning that &ldquo;<kbd>This freespace appears to be leaked</kbd>&rdquo;
+				and questions if you want to insert anyway. Answer &ldquo;<kbd>no</kbd>&rdquo; (else you'll waste freespace) to not modify the ROM.<br><br>
+				
+				If you get an error saying &ldquo;<kbd>No freespace found&rdquo;</kbd>, that means there are no freespace with sufficient bytes available. If this happens, either don't patch Shared Subroutines, or remove some other ASM stuff or data and try again.
+			</li>
+		</ul>
+	</li>
+	<li>
+		Open <kbd>subroutinecode.asm</kbd> and on the very bottom after the last subroutine, create your routine,
+		here is a simple example:
+<div class="CodeBlock"><pre>MyRoutine123:
 	;Sets current player's lives to 99.
-	LDA.b #98 ;>In SMW's lives system, the value stored in memory is -1 from displayed (if HUD says 5, its #$04)
+	LDA.b #98 ;&gt;In SMW's lives system, the value stored in memory is -1 from displayed (if HUD says 5, its #$04)
 	STA $0DBE|!addr
 	RTL
-</pre></td></tr></table>
-</li>
-<li>Next, create an <kbd>autoclean JML RoutineMainLabel</kbd> on the JML list entry like so:
-<table><tr><td><pre>;[...]
+</pre></div>
+	</li>
+	<li>
+		Next, create an <kbd>autoclean JML RoutineMainLabel</kbd> on the JML list entry like so:
+<div class="CodeBlock"><pre>;[...]
 autoclean JML LoseYoshi				; make Yoshi run away
-autoclean JML MyRoutine123			;>This new routine
-JMLListEnd: ;>The byte-address +1 from the last byte.
-;^Don't items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
-</pre></td></tr></table>
-Now run Asar to insert the routines package into your game.
-</li><br>
-<li>To call this routine from third-party resources, like from blocks, sprites, patches, uberasm tool, etc,
-you must define the &ldquo;label defines&rdquo; by copying the folder <kbd>SharedSub_Defines</kbd> and call
-that using the incsrc command in asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines:
-<table><tr><td><pre>incsrc "SharedSub_Defines/SubroutineDefs.asm"
-	;[...]
-	JSL !MyRoutine123</pre></td></tr></table>
-</li>
-</ol>
-If you want to port your codes that uses !defines natively (or defines used exclusively in the routine)
-to the shared subroutines patch (many patches uses subroutines), see <a name="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>
-on how to do so.
+autoclean JML MyRoutine123			;&gt;This new routine
+JMLListEnd: ;&gt;The byte-address +1 from the last byte.
+;^Don't have items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
+</pre></div>
+		Now run Asar to insert the routines package into your game.<br><br>
 
-<h2>Workings documentation</h2>
+		If you want to port your codes that uses <kbd>!defines</kbd> naively (or defines used exclusively in the routine)
+		to the shared subroutines patch (many patches uses subroutines), see <a id="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>.
+		on how to do so.<br><br>
+
+		Note that there may be some subroutines included you don't need in your hack, if that's the case, feel free to remove the JML list, the define associated to,
+		and the subroutine itself to save space. Make sure the order between the JML list and the macro define list must match.
+	</li><br>
+</ol>
+<h2><a href="#ToC_HowToUse" id="JMPTo_HowToUse">^</a>How to use</h2>
+<ol>
+	<li>
+		To use routines in Shared Subroutines from third-party resources, like from blocks (GPS), sprites (pixi), patches (asar), uberasm tool, etc,
+		you must copy the folder <kbd>SharedSub_Defines</kbd> and include <kbd>SharedSubroutineDefs.asm</kbd> using the <kbd>incsrc "&lt;Path_to_define_file&gt;"</kbd> command
+		at the top of the asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines. Then to call it, simply do <kbd>JSL !SubroutineName</kbd>:
+<div class="CodeBlock"><pre>incsrc "SharedSub_Defines/SharedSubroutineDefs.asm"
+	;[...]
+	JSL !MyRoutine123  ;&gt; An example of a code in a third-party ASM resource calling a subroutine in Shared Subroutines.</pre></div>
+	</li>
+	<li>After that, just insert by running the respective tool.</li>
+</ol>
+<h2><a href="#ToC_RelocateJMLList" id="JMPTo_RelocateJMLList">^</a>How to relocate JML list</h2>
+<p>If you have inserted Shared Subroutines and need to relocate the JML list to another area in ROM or just remove Shared Subroutines entirely, make sure you
+follow these instructions.
+<ol>
+	<li>Whatever you do, do not just simply change <kbd>!Freespace_SharedSub_JMLList</kbd> and re-patch. This only spawns a new JML list without removing the old one.</li>
+	<li>
+		Prerequisites:
+		<ul>
+			<li>Define <kbd>!Freespace_SharedSub_JMLList</kbd> (in <kbd>SharedSub_Defines/SharedSubroutineDefs.asm</kbd>) should not be modified. This is also used as a target location to clear the JML list.</li>
+			<li>The define list (in <kbd>SharedSub_Defines/SharedSubroutineDefs.asm</kbd>) and the JML list (in <kbd>sharedsub.asm</kbd>) should not be modified. Otherwise the subroutine codes would not be properly cleared.</li>
+			<li>In addition to above, the defines and JML list must have equal number of items. Otherwise it might clear an incorrect number of bytes of the JML list.</li>
+		</ul>
+	</li>
+	<li>Patch <kbd>SharedSubRemover.asm</kbd> to your game. This will remove Shared Subroutines entirely. If you just want to remove that, Then the following instructions should be ignored. In that case, you should fix any third-party code
+	in your game that still uses Shared Subroutines, as they now point to a non-existent code that crashes your game.</li>
+	<li>Open <kbd>SharedSub_Defines/SharedSubroutineDefs.asm</kbd> and change the address in <kbd>!Freespace_SharedSub_JMLList</kbd> to some other address. Then repatch <kbd>sharedsub.asm</kbd>.</li>
+	<li>In any ASM resources using Shared Subroutines, make sure you have updated all copies of define file <kbd>SharedSubroutineDefs.asm</kbd> and reinsert the ASM codes.</li>
+</ol>
+</p>
+<h2><a href="#ToC__WorkingsDocumentation" id="JMPTo_WorkingsDocumentation">^</a>Workings documentation</h2>
 Each subroutine holds these items:
 <ul>
-<li>Label &#x2194; definition files:</li>
-<ul><li><kbd>sharedsub.asm</kbd> which holds the JML list. Format: <kbd>autoclean JML SubroutineName</kbd></li><br>
-<li><kbd>subroutinedefs.asm</kbd> which is the definition file. The subroutine labels gets assigned to
-the definition name (thus, using <kbd>SubroutineName</kbd> as a label for your subroutine, the definition
-to access this subroutine is <kbd>!SubroutineName</kbd>, you simply call using <kbd>JSL !SubroutineName</kbd>).
-This is because Asar (or other patching tools) is unaware of what is installed inside the ROM, so it cannot obtain the locations
-of the start of the routines.
-</li></ul><br>
-Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the defines list in <kbd>SubroutineDefs.asm</kbd> must match (this includes
-not to have missing defines on a JML item that does exist, and vice versa),
-for example:
-<table><tr><td><pre>;[...]
+	<li>
+		Label &#x2194; definition files:
+		<ul>
+			<li>
+				<kbd>sharedsub.asm</kbd> which holds the JML list (under the <kbd>JMLListStart:</kbd> label),  Format: <kbd>autoclean JML SubroutineName</kbd>
+			</li><br>
+			<li>
+				<kbd>SharedSubroutineDefs.asm</kbd> contains definitions regarding the location of the JMLs and a macro that generates new defines for each JML list item.
+				Because Asar (or other patching tools) is unaware of what is installed inside the ROM, so it cannot obtain the locations
+				of the start of the routines (not without using a large number of <kbd>read&lt;Number&gt;(&lt;Address&gt;)</kbd> for asar).
+			</li>
+		</ul><br>
+		Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the macro defines list in <kbd>SharedSubroutineDefs.asm</kbd> must match (this includes
+		not to have missing defines on a JML item that does exist, and vice versa),
+		for example:
+<div class="CodeBlock"><pre>;[...]
 autoclean JML SubroutineName
-autoclean JML AnotherSubroutineExample</pre></td></tr></table><br>
+autoclean JML AnotherSubroutineExample</pre></div><br>
 
-means that in the definition file, it needs to be ordered like this:
-<table><tr><td><pre>;[...]
-%SetDefine(SubroutineName)
-%SetDefine(AnotherSubroutineExample)</pre></td></tr></table><br>
+		means that in the definition file, it needs to be ordered like this:
+<div class="CodeBlock"><pre>;[...]
+%SetSharedSubDefine(SubroutineName)
+%SetSharedSubDefine(AnotherSubroutineExample)</pre></div><br>
 
-and not this:
-<table><tr><td><pre>;[...]
-<font color="red">%SetDefine(AnotherSubroutineExample)</font>	;>Gets assigned to [SubroutineName]
-<font color="red">%SetDefine(SubroutineName)</font>		;>Gets assigned to [AnotherSubroutineExample]
-</pre></td></tr></table><br>
+		and not this:
+<div class="CodeBlock"><pre>;[...]
+<span style="color: red;">%SetSharedSubDefine(AnotherSubroutineExample)</span>	;&gt;Gets assigned to [SubroutineName]
+<span style="color: red;">%SetSharedSubDefine(SubroutineName)</span>		;&gt;Gets assigned to [AnotherSubroutineExample]
+</pre></div><br>
 
-And this:
-<table><tr>
-<td><pre>autoclean JML FindFreeUploadSlot
+		And this:
+<div class="CodeBlock"><pre>autoclean JML FindFreeUploadSlot
 autoclean JML GetRand2
-<font color="red">autoclean JML RangedRandomRt</font> ;>Not assigned to define.
+<span style="color: red;">autoclean JML RangedRandomRt</span> ;&gt;Not assigned to define.
 autoclean JML ChangeMap16
 autoclean JML FindMap16ActsLike
 autoclean JML FindMap16TileNum
 autoclean JML SubGetItemMemory
-;[...]</pre></td>
+;[...]</pre></div>
 
-<td><pre>!FindFreeUploadSlot = JMLListStart	;>The first JML doesn't get a macro so that it doesn't skip 4 bytes after "JMLListStart".
-%SetDefine(GetRand2)
-<font color="yellow">%SetDefine(ChangeMap16)</font>			;>Gets assigned to [RangedRandomRt]
-<font color="yellow">%SetDefine(FindMap16ActsLike)</font>		;>Gets assigned to [ChangeMap16]
-<font color="yellow">%SetDefine(FindMap16TileNum)</font>		;>Gets assigned to [FindMap16ActsLike]
-<font color="yellow">%SetDefine(SubGetItemMemory)</font>		;>Gets assigned to [FindMap16TileNum]
-;[...]</pre></td>
-</tr></table>
+<div class="CodeBlock"><pre>%SetSharedSubDefine(!FindFreeUploadSlot)
+%SetSharedSubDefine(GetRand2)
+<span style="color: yellow;">%SetSharedSubDefine(ChangeMap16)</span>		;&gt;Gets assigned to [RangedRandomRt]
+<span style="color: yellow;">%SetSharedSubDefine(FindMap16ActsLike)</span>		;&gt;Gets assigned to [ChangeMap16]
+<span style="color: yellow;">%SetSharedSubDefine(FindMap16TileNum)</span>		;&gt;Gets assigned to [FindMap16ActsLike]
+<span style="color: yellow;">%SetSharedSubDefine(SubGetItemMemory)</span>		;&gt;Gets assigned to [FindMap16TileNum]
+;[...]</pre></div>
 
-Because then the labels gets assigned to the wrong define(s).<br><br>
+		Because then the labels gets assigned to the wrong define(s).<br><br>
 
-What actually happens is that defines are being assigned to a JML manually; its guessed via taking the first JML address and adds by 4 for each
-define through a macro being called without regards to the actual JML list (Asar cannot &ldquo;extract&rdquo; the list to find out what defines
-correspond to what define). Thus the defines are being independent, each subsequent subroutine define means the next JML list item, regardless
-of its label name nor its define.<br><br>
+		What actually happens is that a define gets assigned to an address, the address is then increased by 4 (because JML occupies 4 bytes), then
+		assign the next define at that new address, and repeats for each define. It does not regard the actual names of the subroutine labels corresponding to the define names; only regarded by guessing based on their list
+		positions/&ldquo;index&rdquo;. This also means you can rename the defines to avoid potential define conflicts (e.g. <kbd>%SetSharedSubDefine(LoseYoshi)</kbd> can be changed to <kbd>%SetSharedSubDefine(SharedSub_LoseYoshi)</kbd> to
+		form the define <kbd>!SharedSub_LoseYoshi</kbd> and it will still work).<br><br>
 
-If you change <kbd>!FreespaceU</kbd>'s address, then patch again, it does not remove the old JML list, you have to manually
-erase them using either a debugger or a hex editor. This is because the list itself stored in the ROM must be at a fixed
-location being defined by <kbd>!FreespaceU</kbd>, so Asar cannot magically know that previous spot location.<br><br>
-
-<li><kbd>subroutinecode.asm</kbd> holds the subroutine code itself. Format:
-<table><tr><td><pre>SubroutineName:
+		One thing you should avoid is setting the same define again (duplicate <kbd>%SetSharedSubDefine(DefineSubroutineName)</kbd> in the define list), as every copy will re-assign the address value of the same define. The JML list manager linked
+		will also detect that.<br><br>
+	</li>
+	<li>
+		<kbd>subroutinecode.asm</kbd> holds the subroutine code itself. Format:
+<div class="CodeBlock"><pre>SubroutineName:
 &lt;Code here&gt;
-;ends using an RTL, not RTS.</pre></td></tr></table></li><br>
+;ends using an RTL, not RTS.</pre></div>
+	</li><br>
+
+	<li>I've provided <a href="Readme_Files/JMLDefineListManager.html" id="JMLDefineListManager_back">a JavaScript tool</a> that manages the list of subroutines.</li>
 </ul>
 <h2>Notes</h2>
 <ul>
-<li>Be very careful to avoid having label duplicates (i.e &ldquo;redefined label&rdquo;), as asar would error out saying that
-they are redefined. This likely happens when you add a new routine that does not use sublabels. To avoid this, edit the code to
-use it (number of &ldquo;.&rdquo;s before the name of the sublabel) or +/- (have them repeated should one jumps over another
-(example: <kbd>BRA ++</kbd> to branch downards to the first <kbd>++</kbd>)).</li><br>
+	<li>
+		Be careful to avoid having label duplicates (i.e &ldquo;redefined label&rdquo;) in the subroutine codes, as asar would error out saying that
+		they are redefined (you cannot have a label point to 2 or more locations). This likely happens when you insert a newer version of a subroutine in
+		addition to the old one, or add a new routine that does not use sublabels. To avoid this, edit the code to use sublabels (number of
+		&ldquo;<kbd>.</kbd>&rdquo;s before the name of the sublabel), use +/- (have them repeated should one jumps over another
+		(example: <kbd>BRA ++</kbd> to branch downards to the first <kbd>++</kbd>)), rename the main labels, or remove the old and outdated subroutine.
+	</li><br>
+	<li>
+		It is safe to call a routine within a routine, since they are in the same patch (Asar knows the labels within <kbd>subroutinecode.asm</kbd>,
+		so you won't get error saying &ldquo;label not found&rdquo;) because multiples files connected via <kbd>incsrc</kbd>), you can simply call the
+		subroutine directly without using a define (<kbd>JSL SubroutineName</kbd> instead of <kbd>JSL !SubroutineName</kbd> to save a few cycles, since you don't
+		have to jump to a JML in the JML list, then back into the routine code)
+	</li><br>
 
-<li>It is safe to call a routine within a routine, since they are in the same patch (Asar knows the labels within <kbd>subroutinecode.asm</kbd>,
-so you won't get error saying &ldquo;label not found&rdquo;) because multiples files connected via <kbd>incsrc</kbd>), you can simply call the
-subroutine without using a define (<kbd>JSL SubroutineName</kbd> instead of <kbd>JSL !SubroutineName</kbd> to save a few cycles, since you don't
-have to jump to a JML in the JML list, then back into the routine code)</li><br>
+	<li>
+		Due to how the SNES bank borders work, if you have a very large code in <kbd>subroutinecode.asm</kbd> and/or a large JML list, Asar will error out saying
+		a bank border have been crossed. To fix this, have <kbd>freecode</kbd> near the area (between two subroutines, data, or table, not during that area)  that is about to
+		cross the border. This will tell asar to have the following code in a different freespace address location.<br><br>
 
-<li>Due to how the SNES bank borders work, if you have a very large code in <kbd>subroutinecode.asm</kbd> and/or a large JML list (the limit is 8192
-JMLs if you were to place the list at the start of the bank (address $xx0000) that is completely empty and not using banks $10-$7F and $90-$FF) that would
-exceed $*000 bytes (a full bank is actually $10000 bytes big, but only half is used in the ROM), asar errors out saying a bank border have
-been crossed. To fix this, simply use <kbd>freecode</kbd> command near the area (between two subroutines, data, or table, not during that area) that is about
-to cross the border. This will make the section after <kbd>freecode</kbd> use a different freespace location.
-You may have to use this code just in case since the bank value doesn't get updated and you're using a
-16-bit table addressing:
+		In LoROM, banks <kbd>$00~$7D</kbd> (according to the image in <a href="https://www.smwcentral.net/?p=section&a=details&id=14268">Ersanio's ASM tutorial</a>) reserves the lower half (<kbd>$0000~$7FFF</kbd>, 32768 bytes) for other things (hardware registers, RAM mirrors, etc.). The upper half
+		of the bank (<kbd>$8000~$FFFF</kbd>, 32768 bytes) is ROM data, which is where you place your code, including the JML list, in. With only 32768 bytes available in each section,
+		you can have up to 8192 JMLs, or 8190 JMLs should you have a RATS tag applied. To calculate the maximum JMLs you can have in a range of addresses, the formula is
+		<kbd class="CodeBlock">MaxJMLs = <abbr title="Round down an integer; obtain the highest integer less than or equal to X.">floor</abbr>((MaxAddress - MinAddress + 1 - RatsSpace) / 4)</kbd>. Here's a calculator you can use:
+		<div style="border: 1px solid white; margin: 10px">
+			<kbd>Min Address: $</kbd><input type="text" value="8000" id="Input_MaxJMLsCalculator_MinAddress" onchange="Correct16bitHexAddress(); CalculateMaxJMLs();" class="NumberHexInput"><br>
+			<kbd>Max Address: $</kbd><input type="text" value="FFFF" id="Input_MaxJMLsCalculator_MaxAddress" onchange="Correct16bitHexAddress(); CalculateMaxJMLs();" class="NumberHexInput"><br>
+			<label><kbd>RATS tag: </kbd><input type="checkbox" checked id="Input_MaxJMLsCalculator_RATs" onchange="CalculateMaxJMLs();"></label><br><br>
+			<kbd id="Output_MaxJMLsCalculator_MaxJMLs"></kbd>
+		</div><br>
+		In SA-1, be sure to check out the memory map documentation of the SA-1 ASM resource.<br><br>
 
-<table><tr><td><pre>	PHB		;>Preserve bank into stack
-	PHK		;>Push current bank
-	PLB		;>Pull out as current bank
-	;[...]		;>code that would need a correct bank
-	PLB		;>Restore bank.
-	;[...]		;>In case if you wanted code here that doesn't need current bank.</pre></td></tr></table><br>
+		You may have to use this code just in case since the bank value doesn't get updated and you're using a 16-bit table addressing:
 
-<li>When selecting a location (by setting <kbd>!FreespaceU</kbd>) to insert your JML list, if you pick an area in banks <kbd>$10</kbd> or
-higher, the 8-byte RATS tag will be included (RATS tag is at <kbd>!FreespaceU</kbd>, and 8 bytes after the starting byte is the actual
-JML list (don't worry, the define also adjust 8 bytes to align with the JML location)).</li>
-</li><br>
-
-<li>If you experience weird glitches or a crash when you patch a third-party freespace patch, then re-apply this patch, its likely that the previous patch before this
-must've been placed a freespace code after the JML list of this patch, then gets overwritten by the expanded JML list. A simple fix is to create placeholder JMLs
-(they're just empty routines that just exist so that in the future, you can replace it to be an actual routine) on the list so that other freespace-required
-patches don't &ldquo;cut in line&rdquo; of the JML list, here is what I mean:
-<table><tr><td><pre>;Make sure the list ends with nth number of these, and not to have actual routines after if you're not going to have these defined,
+<div class="CodeBlock"><pre>	PHB		;&gt;Preserve bank into stack
+	PHK		;&gt;Push current bank
+	PLB		;&gt;Pull out as current bank
+	;[...]		;&gt;code that would need a correct bank
+	PLB		;&gt;Restore bank.
+	;[...]		;&gt;In case if you wanted code here that doesn't need current bank.</pre></div></li><br>
+	<li>
+		The data layout of the JML list is this:<br>
+		<img src="Readme_Files/SharedSubJMLListDataFormat.png">
+	</li>
+	<li>
+		The game may glitch/crash if you patch Shared Subroutines (step 1), then a third-party patch that uses freespace (step 2), then re-apply Shared Subroutines with a longer list of JMLs (step 3) upon
+		executing code of the third party patch:<br>
+		<img src="Readme_Files/JMLListExpansionProblem.png"><br>
+		That is because the previous patch at step 2 must've been placed a freespace code after the JML list, then gets overwritten by the expanded JML list upon reapplying. To avoid this in the first place,
+		before patching Shared Subroutines the first time, create placeholder JMLs (they're just empty routines that just exist so that in the future, you can replace it to be an actual routine) on the list
+		so that other freespace patches don't &ldquo;cut in line&rdquo; of the JML list, here is what I mean:
+<div class="CodeBlock"><pre>;Make sure the list ends with nth number of these, and not to have actual routines after if you're not going to have these defined,
 ;else you would assign the defines to the wrong label.
-autoclean JML Placeholder
-autoclean JML Placeholder
-autoclean JML Placeholder
-autoclean JML Placeholder
-autoclean JML Placeholder
-;[...] ;>expand this as many as you would expect how many routines you would need.
-JMLListEnd: ;>The byte-address +1 from the last byte.</pre></pre></td></tr></table></li>
+autoclean JML Placeholder	;\Take up space so that future 3rd-party patches will not be placed here (reserve that space)
+autoclean JML Placeholder	;|
+autoclean JML Placeholder	;|
+autoclean JML Placeholder	;|
+autoclean JML Placeholder	;|
+;[...] ;&gt;expand this as many as you would expect how many routines you would need.
+JMLListEnd: ;&gt;The byte-address +1 from the last byte.</pre></pre></div><br>
+		The result:<br>
+		<img src="Readme_Files/JMLListExpansionSolution.png"><br>
+		<kbd>subroutinecode.asm</kbd>:
+<div class="CodeBlock"><pre>PlaceHolder:
+	RTL	;&gt;A blank subroutine that just exist (you only need to have this code exist once).
+		;You can also just point them to the same subroutine (any will work).</pre></pre>
+</div>
+		If you do run into this type of issue, best way to handle this is to restore your game to a previous state (in Lunar Magic's menu bar, it's under <kbd>File</kbd> &rarr; <kbd>Restore</kbd> &rarr; <kbd>Restore ROM to previous state...</kbd>) that is before your first time of inserting Shared Subroutines patch.
+	</li><br>
 
-<kbd>subroutinecode.asm</kbd>:
-<table><tr><td><pre>PlaceHolder:
-	RTL;>A blank subroutine that just exist (you only need to have this code exist once).</pre></pre></td></tr></table></li><br>
+	<li>
+		To add to above, if you re-patch Shared Subroutines with a bigger list of JMLs but the amount it increases is no bigger than 8 bytes (equivalent to 2 JMLs), then only the third-party
+		patch's RATS tag at the beginning of its freespace gets corrupted (RATs tags are 8-bytes long) while the code itself is safe to execute. When this happens, problem may arises the next time
+		you insert any freespace-type patch (they end up thinking the third-party's code is freespace, especially given that the first 4 bytes &ldquo;STAR&rdquo; are now garbage values).
+	</li>
+	<li>The provided routines in this ASM file may be out of date. Newer tool features and such can happen long after the last update of this ASM resource. Feel free to update them if you wish.</li>
 
-<li>The information displayed on the Asar console window when patching is whats actually inserted into the ROM, not based on defines. So if you have more items in
-the defines than on the JML list, that won't do anything to the game, nor the display (you probably want the number of entries in both lists to be equal anyways).</li>
+	<li>
+		The information displayed on the Asar console window when patching is whats actually inserted into the ROM, not based on defines. So if you have more items in
+		the defines than on the JML list, that won't do anything to the game, nor the display (you probably want the number of entries in both lists to be equal anyways).
+	</li>
+
+	<li>
+		If you run into define conflicts (two ASM resources uses of the same define for something different) on an ASM resource using Shared Subroutines, you can restore the defines' value by including the define file again (<kbd>incsrc</kbd>)
+		at the spot where you want it to be restored (does not have to be at the top of the ASM file).
+	</li>
 </ul>
+<script>
+
+	[...document.querySelectorAll("*.NumberHexInput")].forEach(HTMLElement => {
+		HTMLElement.addEventListener(
+			"keydown",
+			function (e) {
+				let PressedKey = e.key
+				let HTMLElementInteracted = event.target
+				
+				let Value = 0n
+				try {
+					Value = BigInt("0x" + HTMLElementInteracted.value)
+				} catch {}
+				if (PressedKey == "ArrowUp" || PressedKey == "ArrowDown") {
+					//^Only update the text field if arrowup/arrowdown are pressed
+					if (PressedKey == "ArrowUp") {
+						e.preventDefault()
+						Value++
+					} else if (PressedKey == "ArrowDown") {
+						Value--
+					}
+					HTMLElementInteracted.value = Value.toString(16).toUpperCase().padStart(4, "0")
+					
+					HTMLElementInteracted.onchange()
+				}
+			}
+		)
+	})
+	CalculateMaxJMLs() //Calculate the JMLs automatically
+
+	function Correct16bitHexAddress() {
+		let Value = 0n 
+		try {
+			Value = BigInt("0x" + event.target.value)
+		} catch {}
+		Value = BigintClamp(Value, 0n, BigInt("0xFFFF"))
+		event.target.value = Value.toString(16).toUpperCase().padStart(4, "0")
+	}
+	function BigintClamp(num, min, max) {
+		//Restrict a number within a specified range, bigInt edition.
+			return num <= min ? min : num >= max ? max : num;
+	}
+	function CalculateMaxJMLs() {
+		let MinAddress = BigInt("0x" + document.getElementById("Input_MaxJMLsCalculator_MinAddress").value)
+		let MaxAddress = BigInt("0x" + document.getElementById("Input_MaxJMLsCalculator_MaxAddress").value)
+		let RATSSpace = BigInt(document.getElementById("Input_MaxJMLsCalculator_RATs").checked) * 8n
+		
+		let OutputText = ""
+		if (MaxAddress < MinAddress) {
+			OutputText = "Max address is before min address."
+		} else {
+			let TotalSpaceInRange = MaxAddress - MinAddress + 1n
+			let MaxJMLsCount = (TotalSpaceInRange - RATSSpace) / 4n
+			let LeftOverSpace = (TotalSpaceInRange - RATSSpace) % 4n
+			if (MaxJMLsCount > 0n) {
+				OutputText = "Max JMLs: " + MaxJMLsCount.toString(10)
+				if (LeftOverSpace != 0n) {
+					OutputText += " (" + LeftOverSpace.toString(10) + " leftover byte(s))"
+				}
+			} else {
+				OutputText = "Not enough room. There are " + TotalSpaceInRange.toString(10) + " byte(s) available in the range, and you need at least " + (RATSSpace+4n) + " bytes."
+			}
+		}
+		document.getElementById("Output_MaxJMLsCalculator_MaxJMLs").textContent = OutputText
+	}
+
+
+//These makes all <pre>...</pre> have an effect that double-clicking will select all the text
+//in it, to make it easy to copy code and paste it in your ASM stuff.
+//
+//Credit:
+// https://keestalkstech.com/2014/04/click-to-select-all-on-the-pre-element/
+// https://www.sanwebe.com/2014/04/select-all-text-in-element-on-click
+document.addEventListener('dblclick', e => {
+  let pre = getClosest(e.target, "PRE");
+  if (pre && e.ctrlKey) {
+    let range = new Range();
+    range.selectNodeContents(pre);
+    document.getSelection().removeAllRanges();
+    document.getSelection().addRange(range);
+  }
+});
+
+function getClosest(el, tagName) {
+  tagName = tagName && tagName.toUpperCase();
+
+  if (!tagName || !el)
+    return null;
+
+  do
+    if (el.nodeName === tagName)
+      return el;
+  while (el = el.parentNode);
+
+  return null;
+}
+</script>
