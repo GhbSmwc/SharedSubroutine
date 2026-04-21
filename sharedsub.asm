@@ -105,7 +105,7 @@ endmacro
 %define_sprite_table(sprite_extra_prop2, "7FAB34", $7FAB34, $606D)
 %define_sprite_table(sprite_custom_num, "7FAB9E", $7FAB9E, $6083)
 
-incsrc "SharedSub_Defines/OtherDefines.asm"
+incsrc "SharedSub_Defines/SharedSubroutineDefsOther.asm"
 incsrc "SharedSub_Defines/SharedSubroutineDefs.asm"
 
 org !Freespace_SharedSub_JMLList

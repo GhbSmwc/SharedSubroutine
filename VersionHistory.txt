@@ -3,8 +3,9 @@ a sub-version (like a chapter number), NOT a decimal point (goes like this 1.8, 
 1.10... and not 1.8, 1.9 2.0...). 
 
 Format: M/D/Y date format, list ordered from recent to oldest.
-4/20/2026 - 2.4.2 - Renaming "SubroutineDefs.asm" to "SharedSubroutineDefs.asm"
- -Renamed the definition file to a specific type of ASM resource to reduce confusion.
+4/20/2026 - 2.4.2 - Renaming define files to reduce ambiguity.
+ -Renamed "SubroutineDefs.asm" to "SharedSubroutineDefs.asm".
+ -Renamed "OtherDefines.asm" to "SharedSubroutineDefsOther.asm".
 9/12/2025 -2.4.1 - Anti-patch added for relocating shared subroutines.
  -Added an anti-patch.
 9/5/2025 -2.4 - Minor update
