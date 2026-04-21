@@ -78,7 +78,7 @@ which then jumps to the freespace subroutine. If you make changes on the subrout
 <ul>
 	<li><a href="#JMPTo_HowToInsert" id="ToC_HowToInsert">How to insert</a></li>
 	<li><a href="#JMPTo_HowToUse" id="ToC_HowToUse">How to use</a></li>
-	<li><a href="#JMPTo_RelocateJMLList" id="ToC_RelocateJMLList">How to relocate JML list</a></li>
+	<li><a href="#JMPTo_RelocateJMLList" id="ToC_RelocateJMLList">How to relocate or remove JML list</a></li>
 	<li><a href="#JMPTo_WorkingsDocumentation" id="ToC__WorkingsDocumentation">Workings Documentation</a></li>
 
 </ul>
@@ -133,7 +133,7 @@ IMPORTANT: The "LoROM Offset" is what is entered in xkas as free space
 				With the example above showing freespace, I choose <kbd>$128000</kbd> (so I set <kbd>!Freespace_SharedSub_JMLList</kbd> to that address number), now look at the left two hex
 				digits, that is bank <kbd>$12</kbd>, and if you haven't added any new routines or remove any, the number of bytes the JML list takes is
 				<kbd class="CodeBlock">208 = 8 + (50 * 4)</kbd>. With <kbd>$128000</kbd> having <kbd>$8000</kbd> (<kbd>32768</kbd>) bytes free, that is enough space to fit the 208-byte JML list in. This results in <kbd>$128000</kbd> to <kbd>$1280CF</kbd> now being occupied.
-				Upon patching <kbd>sharedsub.asm</kbd>, asar will display the memory statistics about the JML list (including the RATs tag when needed).<br><br>
+				Upon patching <kbd>sharedsub.asm</kbd>, asar will display the memory statistics about the JML list (including the RATS tag when needed).<br><br>
 			</li>
 			<li>
 				To locate freespace without slogger (especially if you're using SA-1 ROM, which may have issues), another method is to create a dummy ASM file with the following text and patching with Asar so that it searches freespace with enough space for you
@@ -157,7 +157,8 @@ Test:
 				Once asar runs this, it will display the <kbd>print</kbd> command text with the address you can use (copy that), along with a warning that &ldquo;<kbd>This freespace appears to be leaked</kbd>&rdquo;
 				and questions if you want to insert anyway. Answer &ldquo;<kbd>no</kbd>&rdquo; (else you'll waste freespace) to not modify the ROM.<br><br>
 				
-				If you get an error saying &ldquo;<kbd>No freespace found&rdquo;</kbd>, that means there are no freespace with sufficient bytes available. If this happens, either don't patch Shared Subroutines, or remove some other ASM stuff or data and try again.
+				If you get an error saying &ldquo;<kbd>No freespace found&rdquo;</kbd>, that means there are no freespace with sufficient bytes available. If this happens, either remove any unused subroutines from
+				the JML list (don't forget to update the macro define list), remove some other ASM stuff or data and try again, or don't patch Shared Subroutines.
 			</li>
 		</ul>
 	</li>
@@ -222,15 +223,44 @@ Subroutine2:
 <ol>
 	<li>
 		To use routines in Shared Subroutines from third-party resources, like from blocks (GPS), sprites (pixi), patches (asar), uberasm tool, etc,
-		you must copy the folder <kbd>SharedSub_Defines</kbd> and include <kbd>SharedSubroutineDefs.asm</kbd> using the <kbd>incsrc "&lt;Path_to_define_file&gt;"</kbd> command
-		at the top of the asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines. Then to call it, simply do <kbd>JSL !SubroutineName</kbd>:
-<div class="CodeBlock"><pre>incsrc "SharedSub_Defines/SharedSubroutineDefs.asm"
+		you must either:
+		<ul>
+			<li>
+				Copy the folder <kbd>SharedSub_Defines</kbd>, paste it in the same location as the tools' <kbd>.exe</kbd> programs are at,
+				and include <kbd>SharedSubroutineDefs.asm</kbd> using the <kbd>incsrc "&lt;Path_to_define_file&gt;"</kbd> command at the
+				top of the asm files that calls the <kbd>subroutinecode.asm</kbd>'s routines. Then to call it, simply do <kbd>JSL !SubroutineName</kbd>:
+<div class="CodeBlock"><pre>incsrc "../SharedSub_Defines/SharedSubroutineDefs.asm"
+	;^Most tools would have ASM files from SMWC be placed in folders 1 level deeper from where the ".exe" program is at.
+	;Thus the "../" would go up a directory from the ASM file using such a command to where the ".exe" is at.
+	
 	;[...]
+	
 	JSL !MyRoutine123  ;&gt; An example of a code in a third-party ASM resource calling a subroutine in Shared Subroutines.</pre></div>
+			</li>
+			<li>
+				Similarly to above but you instead copy the file <kbd>SharedSubroutineDefs.asm</kbd>
+				and have it be placed where the tools' <kbd>.exe</kbd> programs are at, and the <kbd>incsrc</kbd> would be this (or similar) instead:
+<div class="CodeBlock" style="width: 271px; height: 17px;"><pre>incsrc "../SharedSubroutineDefs.asm"</pre></div>
+				Most likely you would have it like this since you won't need to include <kbd>SharedSubroutineDefsOther.asm</kbd> prior to
+				calling the subroutine and you wouldn't want a folder that contains just one define file when you can just have the define file directly
+				where the program is at.
+			</li>
+		</ul>
+		Note that <kbd>SharedSubroutineDefsOther.asm</kbd> is only used on the following included subroutines:
+<div class="CodeBlock" style="width: 155px; height: 107px;"><pre>ClearLevelEventMisc
+FindFreeUploadSlot
+FindLevelEventSlot
+FindTilemapIndex
+FindTilemapIndexSub
+GetDynamicSprSlot
+GetExtraDrawInfo
+</pre></div>
+		If you're not using them, you can remove <kbd>incsrc "SharedSub_Defines/SharedSubroutineDefsOther.asm"</kbd> and the JML list items referencing them in <kbd>subroutinecode.asm</kbd>, and
+		the macro define list items in <kbd>SharedSubroutineDefs.asm</kbd> also referencing them.
 	</li>
 	<li>After that, just insert by running the respective tool.</li>
 </ol>
-<h2><a href="#ToC_RelocateJMLList" id="JMPTo_RelocateJMLList">^</a>How to relocate JML list</h2>
+<h2><a href="#ToC_RelocateJMLList" id="JMPTo_RelocateJMLList">^</a>How to relocate or remove JML list</h2>
 <p>If you have inserted Shared Subroutines and need to relocate the JML list to another area in ROM or just remove Shared Subroutines entirely, make sure you
 follow these instructions.
 <ol>
@@ -303,8 +333,8 @@ autoclean JML SubGetItemMemory
 		Because then the labels gets assigned to the wrong define(s).<br><br>
 
 		What actually happens is that a define gets assigned to an address, the address is then increased by 4 (because JML occupies 4 bytes), then
-		assign the next define at that new address, and repeats for each define. It does not regard the actual names of the subroutine labels corresponding to the define names; only regarded by guessing based on their list
-		positions/&ldquo;index&rdquo;. This also means you can rename the defines to avoid potential define conflicts (e.g. <kbd>%SetSharedSubDefine(LoseYoshi)</kbd> can be changed to <kbd>%SetSharedSubDefine(SharedSub_LoseYoshi)</kbd> to
+		assign the next define at that new address, and repeats for each define. It does not regard the actual names of the subroutine labels corresponding to the define names; only regarded by guessing based on their
+		positions on the list. This also means you can rename the defines to avoid potential define conflicts (e.g. <kbd>%SetSharedSubDefine(LoseYoshi)</kbd> can be changed to <kbd>%SetSharedSubDefine(SharedSub_LoseYoshi)</kbd> to
 		form the define <kbd>!SharedSub_LoseYoshi</kbd> and it will still work).<br><br>
 
 		One thing you should avoid is setting the same define again (duplicate <kbd>%SetSharedSubDefine(DefineSubroutineName)</kbd> in the define list), as every copy will re-assign the address value of the same define. The JML list manager linked
@@ -391,7 +421,7 @@ JMLListEnd: ;&gt;The byte-address +1 from the last byte.</pre></pre></div><br>
 	</li><br>
 
 	<li>
-		To add to above, if you re-patch Shared Subroutines with a bigger list of JMLs but the amount it increases is no bigger than 8 bytes (equivalent to 2 JMLs), then only the third-party
+		To add to above, if you re-patch Shared Subroutines with a bigger list of JMLs but the amount it increases is no bigger than 8 bytes (which is exactly 2 JMLs), then only the third-party
 		patch's RATS tag at the beginning of its freespace gets corrupted (RATs tags are 8-bytes long) while the code itself is safe to execute. When this happens, problem may arises the next time
 		you insert any freespace-type patch (they end up thinking the third-party's code is freespace, especially given that the first 4 bytes &ldquo;STAR&rdquo; are now garbage values).
 	</li>
