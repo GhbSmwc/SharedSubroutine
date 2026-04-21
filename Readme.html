@@ -180,6 +180,35 @@ JMLListEnd: ;&gt;The byte-address +1 from the last byte.
 ;^Don't have items after this label, otherwise stuff past here is not protected by RATS, and Asar information display will be off.
 </pre></div>
 		Now run Asar to insert the routines package into your game.<br><br>
+		
+		If you get an error saying &ldquo;<kbd>Don't autoclean a label at the end of a freespace block</kbd>&rdquo; error message, that means a contiguous sequence
+		of code in <kbd>subroutinecode.asm</kbd> is too large to fit in a freespace block. This can be solved by adding the text &ldquo;<kbd>freecode</kbd>&rdquo;
+		in between the subroutines just before it goes past the end of the freespace block. This causes asar to find a different freespace location for the
+		code right after it to be placed at, thus separating the code section.<br><br>
+		
+		However, don't put it in between subroutines that are connected via branch (<kbd>BEQ/BNE/BPL/BMI/BCC/BCS/BVC/BVS/BRA/BRL</kbd>) or a 2-byte jump (<kbd>JMP $xxxx</kbd>):
+<div class="CodeBlock"><pre>Subroutine1:
+	;&lt;Some_code_here&gt;
+	BEQ Subroutine2_Label1
+	
+	;&lt;Some_code_here&gt;
+	JMP Subroutine2_Label2
+
+freecode
+
+	;Can be any number of subroutines here, and is still bad to have freecode here
+	;because you have jumps to a location that may be in a different bank, or is
+	;outside the branch's bounds (128 bytes back from the address of the opcode
+	;after the branch, or 127 bytes forward from such opcode).
+
+Subroutine2:
+	;&lt;Some_code_here&gt;
+	.Label1
+		;&lt;Some_code_here&gt;
+	.Label2
+		;&lt;Some_code_here&gt;
+	RTL
+</pre></div>
 
 		If you want to port your codes that uses <kbd>!defines</kbd> naively (or defines used exclusively in the routine)
 		to the shared subroutines patch (many patches uses subroutines), see <a id="RoutinePort" href="Readme_Files/RoutinePorting.html">this information</a>.
