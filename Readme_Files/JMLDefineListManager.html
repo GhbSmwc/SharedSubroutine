@@ -116,7 +116,7 @@ autoclean JML SubroutineName3</pre>
 <textarea class="PlainText" id="UserInput" oninput="InputUpdated(); Process()"></textarea>
 <div id="Output_SharedNames" hidden>
 	<p><span style="color: yellow;">Routines having the same name detected!</span> This works fine if two calls point to the same routine, but may cause issues with the defines as they can conflict (will be the value of what's last sets them).
-	The exception to this are placeholders, which you won't be using.</p>
+	The exception to this are placeholders.</p>
 	<textarea id="ReuseNameLog" class="Output" style="width: 1000px; height: 100px;" readonly></textarea><br><br>
 </div>
 <div id="Output">
@@ -130,7 +130,7 @@ autoclean JML SubroutineName3</pre>
 				Number of JMLs you plan to have in the future: <input type="number" id="TargetJMLListSize" onchange="CorrectNumberInput(); InputUpdated(); Process();" value="100" min="0"><br>
 				<div><label><input type="checkbox" onchange="Process();" id="Setting_DisplayEachJMLInfo">Display address and nth JML position info as comments</label></div>
 				<div><label><input type="checkbox" onchange="Process();" id="Setting_DefinePrependSharedSub" checked>Defines have &ldquo;<kbd>SharedSub_</kbd>&rdquo; prepended in their names to reduce the risk of name conflicts.</label></div>
-				<div id="MoreJMLsThanExpectedMEssage" style="color: yellow; height: 32px;"></div>
+				<div id="MoreJMLsThanExpectedMessage" style="color: yellow; height: 52px; align-content: end;"></div>
 			</td>
 		</tr>
 		<tr>
@@ -398,9 +398,9 @@ autoclean JML SubroutineName3</pre>
 		AddressRangeText += "Total bytes: " + (CurrentAddress-StartingJMLAddress).toString(10)
 		document.getElementById("Statistic_JMLListLayout").textContent = AddressRangeText
 		if (RemainingJMLsToAdd < 0n) {
-			document.getElementById("MoreJMLsThanExpectedMEssage").textContent = "There are " + (RemainingJMLsToAdd*-1n).toString(10) + " more JML(s) than what you've planned. Be careful when re-applying Shared Subroutines patch as a 3rd party patch may be placed after the last JML and get overwritten."
+			document.getElementById("MoreJMLsThanExpectedMessage").textContent = "There are " + (RemainingJMLsToAdd*-1n).toString(10) + " more JML(s) than what you've planned. Be careful when re-applying Shared Subroutines patch as a 3rd party patch may be placed after the last JML and get overwritten."
 		} else {
-			document.getElementById("MoreJMLsThanExpectedMEssage").textContent = ""
+			document.getElementById("MoreJMLsThanExpectedMessage").textContent = ""
 		}
 		let OutputJMLListText = ""
 		let OutputDefineListText = ""
