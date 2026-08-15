@@ -291,7 +291,7 @@ Each subroutine holds these items:
 			<li>
 				<kbd>SharedSubroutineDefs.asm</kbd> contains definitions regarding the location of the JMLs and a macro that generates new defines for each JML list item.
 				Because Asar (or other patching tools) is unaware of what is installed inside the ROM, so it cannot obtain the locations
-				of the start of the routines (not without using a large number of <kbd>read&lt;Number&gt;(&lt;Address&gt;)</kbd> for asar).
+				of the start of the routines (not without using a large number of <kbd>read&lt;Number&gt;(&lt;Address&gt;)</kbd> for asar). Format: <kbd>%SetSharedSubDefine(SubroutineName)</kbd>
 			</li>
 		</ul><br>
 		Be aware that the order of the JML list in <kbd>sharedsub.asm</kbd> and the macro defines list in <kbd>SharedSubroutineDefs.asm</kbd> must match (this includes
@@ -312,7 +312,7 @@ autoclean JML AnotherSubroutineExample</pre></div><br>
 <span style="color: red;">%SetSharedSubDefine(SubroutineName)</span>		;&gt;Gets assigned to [AnotherSubroutineExample]
 </pre></div><br>
 
-		And this:
+		And this is what happens if you skip a subroutine name in the define list:
 <div class="CodeBlock"><pre>autoclean JML FindFreeUploadSlot
 autoclean JML GetRand2
 <span style="color: red;">autoclean JML RangedRandomRt</span> ;&gt;Not assigned to define.
@@ -339,6 +339,9 @@ autoclean JML SubGetItemMemory
 
 		One thing you should avoid is setting the same define again (duplicate <kbd>%SetSharedSubDefine(DefineSubroutineName)</kbd> in the define list), as every copy will re-assign the address value of the same define. The JML list manager linked
 		will also detect that.<br><br>
+		
+		The subroutines codes in <kbd>subroutinecode.asm</kbd> CAN be placed in any order without reguards to the JML and define list order, as the assembler tool searches for corresponding label names between the JML list and the labels pointing
+		to subroutines.
 	</li>
 	<li>
 		<kbd>subroutinecode.asm</kbd> holds the subroutine code itself. Format:
