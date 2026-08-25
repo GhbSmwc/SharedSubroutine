@@ -21,44 +21,44 @@ Placeholder:
 ; if no free slots are found, it will return 0
 ;
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-FindFreeUploadSlot:
-	LDA !RAM_DMASlotsEnabled
-	INC
-	BEQ .Return
-	LDA !RAM_DMASlotIndex
-	TAX
-.Loop
-	LDA !RAM_DMASlotsEnabled
-	AND.l BitTable1,x
-	BEQ .FoundSlot
-	INX
-	BRA .Loop
-.FoundSlot
-	LDA !RAM_DMASlotsEnabled
-	ORA.l BitTable1,x
-	STA !RAM_DMASlotsEnabled
-	TXA
-	ASL #2
-	STA $00
-	ASL
-	ADC $00
-	TAX
-	LDA !RAM_DMASlotIndex
-	INC
-	CMP #$08
-	BCC .SlotsLeft
-	LDA #$00
-	LDY #$01
-.SlotsLeft
-	STA !RAM_DMASlotIndex
-	TAX
-.Return
-	RTL
-
-BitTable1:
-	db $01,$02,$04,$08,$10,$20,$40,$80
-
+if !SharedSubUseFlag_FindFreeUploadSlot
+	FindFreeUploadSlot:
+		LDA !RAM_DMASlotsEnabled
+		INC
+		BEQ .Return
+		LDA !RAM_DMASlotIndex
+		TAX
+	.Loop
+		LDA !RAM_DMASlotsEnabled
+		AND.l BitTable1,x
+		BEQ .FoundSlot
+		INX
+		BRA .Loop
+	.FoundSlot
+		LDA !RAM_DMASlotsEnabled
+		ORA.l BitTable1,x
+		STA !RAM_DMASlotsEnabled
+		TXA
+		ASL #2
+		STA $00
+		ASL
+		ADC $00
+		TAX
+		LDA !RAM_DMASlotIndex
+		INC
+		CMP #$08
+		BCC .SlotsLeft
+		LDA #$00
+		LDY #$01
+	.SlotsLeft
+		STA !RAM_DMASlotIndex
+		TAX
+	.Return
+		RTL
+	
+	BitTable1:
+		db $01,$02,$04,$08,$10,$20,$40,$80
+endif
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;
 ; Alternate random number generator
