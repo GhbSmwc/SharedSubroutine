@@ -145,11 +145,12 @@ JMLListStart: ;>The start byte-address of the RATS
 ; - The order of this JML list must match with the defines list (the [%SetSharedSubDefine(RoutineName)]).
 ;   This also includes if statements for conditionally-added subroutines.
 ; - About conditionally-added subroutines:
-; -- When using if statements for conditionally-added subroutines, when the condition fails, it MUST
-;    place a placeholder (1 for EACH excluded) rather than null, else the list could be smaller, then
-;    when patched again with a different setting, expands, and overwrites stuff past the byte of the JML
-;    list which could corrupt it (either its a table with invalid values, or code that will not either
-;    glitch or crash when executed).
+; -- When using conditionally-added subroutines (if statements), they must occupy the same number of
+;    bytes in the ROM reguardless if the condition is met or not. This can be done by substituting with
+;    another subroutine or placeholder (using "else"), else the list could be smaller, then patched 
+;    again with a different setting, that results in more bytes used of the list, and overwrites stuff
+;    past the last byte of the shorter JML list which could corrupt it (either its a table with invalid
+;    values, or code that will not either glitch or crash when executed).
 ; -- When patching SharedSub.asm with a subroutine that passed the condition, then patching it again with
 ;    that same subrouintine but this time, failed, will autoclean it first and then replaced with with a
 ;    placeholder.
@@ -158,7 +159,7 @@ JMLListStart: ;>The start byte-address of the RATS
 if !SharedSubUseFlag_FindFreeUploadSlot
 	autoclean JML FindFreeUploadSlot		; find a free slot for the DMA setup routine
 else
-	autoclean JML Placeholder
+	autoclean JML Placeholder ;>If not used, just use placeholder or another subroutine. Thus no bytes was lost.
 endif
 autoclean JML GetRand2				; alternate random number generator
 autoclean JML RangedRandomRt		; random number generator that returns a number within a specified range

@@ -71,6 +71,11 @@
 	;   Shared Subroutines's routine defines, to restore the define names,
 	;   you can re-include this define file at where you want it to be
 	;   restored (rather than at the top of the ASM file).
+	; - When using conditionally-added subroutines (if statements), they
+	;   must occupy the same number of bytes and number of items here
+	;   reguardless if the condition is met or not. This can be done using
+	;   substituting with other item in the list or a placeholder (using
+	;   "else").
 	; - If statement, when the conditions fail, they must insert a
 	;   placeholder (1 for EACH) instead of nothing else you could have a
 	;   list that expands and overwrite whatever freespace-occupied stuff
