@@ -3,6 +3,9 @@ a sub-version (like a chapter number), NOT a decimal point (goes like this 1.8, 
 1.10... and not 1.8, 1.9 2.0...). 
 
 Format: M/D/Y date format, list ordered from recent to oldest.
+8/25/2026 - 2.4.2 - Conditionally-added subroutines
+ -Added comments and noted the readme on list order explaining about conditionally-added
+subroutines.
 4/20/2026 - 2.4.2 - Renaming define files to reduce ambiguity.
  -Renamed "SubroutineDefs.asm" to "SharedSubroutineDefs.asm".
  -Renamed "OtherDefines.asm" to "SharedSubroutineDefsOther.asm".

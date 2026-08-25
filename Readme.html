@@ -335,7 +335,8 @@ autoclean JML SubGetItemMemory
 		What actually happens is that a define gets assigned to an address, the address is then increased by 4 (because JML occupies 4 bytes), then
 		assign the next define at that new address, and repeats for each define. It does not regard the actual names of the subroutine labels corresponding to the define names; only regarded by guessing based on their
 		positions on the list. This also means you can rename the defines to avoid potential define conflicts (e.g. <kbd>%SetSharedSubDefine(LoseYoshi)</kbd> can be changed to <kbd>%SetSharedSubDefine(SharedSub_LoseYoshi)</kbd> to
-		form the define <kbd>!SharedSub_LoseYoshi</kbd> and it will still work).<br><br>
+		form the define <kbd>!SharedSub_LoseYoshi</kbd> and it will still work). If the list contains conditionally-added subroutines (inside an if statement), then the if statements too must also mirror each other to
+		avoid define being assigned to the wrong address to jump to.<br><br>
 
 		One thing you should avoid is setting the same define again (duplicate <kbd>%SetSharedSubDefine(DefineSubroutineName)</kbd> in the define list), as every copy will re-assign the address value of the same define. The JML list manager linked
 		will also detect that.<br><br>

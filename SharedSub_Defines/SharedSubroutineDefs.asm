@@ -39,6 +39,25 @@
 			endmacro
 		endif
 	;[Safe to Edit]
+	;Place your "use flag" defines here. It must have them be defined as
+	;0 here.
+	;
+	;This defaults the "use flag" of subroutines to 0. Then later, uses
+	;incsrc "3rd_partyDefineFile.asm", which that conditionally sets
+	;the "use flag" to 1 to indicate a subroutine being used.
+		!SharedSubUseFlag_FindFreeUploadSlot = 0
+	;Place your "incsrc use flag marker" here. Along with placing a
+	;define file "SharedSub_Defines/SharedSubroutineDefs.asm"
+	;(which the pasted define file conditionally sets the use flag
+	;depending on the configuration). The example below:
+	
+		;incsrc "DefineConfigurationThingThatMayUseDMA.asm"
+			;^This contains the following somewhere in the define:
+			;	if !Setting != 0
+			;		!SharedSubUseFlag_FindFreeUploadSlot = 1
+			;	endif
+	
+	;[Safe to Edit]
 	;These below assign each subroutine JML address location to a define.
 	;Afterwards, you can utilize them by having "JSL !RoutineDefineName"
 	;
@@ -46,12 +65,21 @@
 	;
 	;Notes
 	; - The orders in JML list in sharedsub.asm and the macro define list
-	;   here must match.
+	;   here must match. This also includes if statements for
+	;   conditionally-added subroutines.
 	; - If you run into another ASM resource whose defines conflicts with
 	;   Shared Subroutines's routine defines, to restore the define names,
 	;   you can re-include this define file at where you want it to be
 	;   restored (rather than at the top of the ASM file).
-		%SetSharedSubDefine(FindFreeUploadSlot)
+	; - If statement, when the conditions fail, they must insert a
+	;   placeholder instead of nothing else you could have a list that
+	;   expands and overwrite whatever freespace-occupied stuff after the
+	;   list.
+		if !SharedSubUseFlag_FindFreeUploadSlot
+			%SetSharedSubDefine(FindFreeUploadSlot)
+		else
+			%SetSharedSubDefine(SharedSub_Placeholder)
+		endif
 		%SetSharedSubDefine(GetRand2)
 		%SetSharedSubDefine(RangedRandomRt)
 		%SetSharedSubDefine(ChangeMap16)
