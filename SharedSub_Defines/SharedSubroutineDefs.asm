@@ -72,9 +72,9 @@
 	;   you can re-include this define file at where you want it to be
 	;   restored (rather than at the top of the ASM file).
 	; - If statement, when the conditions fail, they must insert a
-	;   placeholder instead of nothing else you could have a list that
-	;   expands and overwrite whatever freespace-occupied stuff after the
-	;   list.
+	;   placeholder (1 for EACH) instead of nothing else you could have a
+	;   list that expands and overwrite whatever freespace-occupied stuff
+	;   after the list.
 		if !SharedSubUseFlag_FindFreeUploadSlot
 			%SetSharedSubDefine(FindFreeUploadSlot)
 		else

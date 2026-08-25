@@ -146,10 +146,10 @@ JMLListStart: ;>The start byte-address of the RATS
 ;   This also includes if statements for conditionally-added subroutines.
 ; - About conditionally-added subroutines:
 ; -- When using if statements for conditionally-added subroutines, when the condition fails, it MUST
-;    place a placeholder rather than null, else the list could be smaller, then when patched again with a
-;    different setting, expands, and overwrites stuff past the byte of the JML list which could corrupt
-;    it (either its a table with invalid values, or code that will not either glitch or crash when
-;    executed).
+;    place a placeholder (1 for EACH excluded) rather than null, else the list could be smaller, then
+;    when patched again with a different setting, expands, and overwrites stuff past the byte of the JML
+;    list which could corrupt it (either its a table with invalid values, or code that will not either
+;    glitch or crash when executed).
 ; -- When patching SharedSub.asm with a subroutine that passed the condition, then patching it again with
 ;    that same subrouintine but this time, failed, will autoclean it first and then replaced with with a
 ;    placeholder.
