@@ -112,7 +112,7 @@ autoclean JML SubroutineName3</pre>
 </table><br><br>
 Note:
 <ul>
-	<li>This does not support conditionally-added subroutines (lists wrapped in if statements).</li>
+	<li>This does not support manuel methods (using explicit if statements, for example) for conditionally-added subroutines, it only supports macros handling it.</li>
 </ul>
 
 </p>
@@ -263,7 +263,8 @@ Note:
 						SubroutineName: ConvertedText,
 						Comment: Comment,
 						ReusedNameLineNumbers: [],
-						Type: "Valid"
+						Type: "Valid",
+						IsConditional: false
 					}
 				} else if ((/autoclean (?:JML|jml) [a-zA-Z_]+[a-zA-Z_\d]*$/).test(ProcessedText)) { //JML list format
 					let SubroutineName = ProcessedText.replace(/autoclean (?:JML|jml) /, "")
@@ -272,7 +273,18 @@ Note:
 						SubroutineName: SubroutineName,
 						Comment: Comment,
 						ReusedNameLineNumbers: [],
-						Type: "Valid"
+						Type: "Valid",
+						IsConditional: false
+					}
+				} else if ((/%(ConditionalSharedSubJMLList|ConditionalSharedSubDefineList)\([a-zA-Z_]+[a-zA-Z_\d]*, [a-zA-Z_]+[a-zA-Z_\d]*, ![a-zA-Z_]+[a-zA-Z_\d]*\)/).test(ProcessedText)) { //conditional
+					let MacroParamaters = ProcessedText.replace(/%(ConditionalSharedSubJMLList|ConditionalSharedSubDefineList)\(/, "").replace(/\).*$/, "").split(/, /)
+					return {
+						LineNumber: Element.LineNumber,
+						MacroParamaters: MacroParamaters,
+						Comment: Comment,
+						ReusedNameLineNumbers: [],
+						Type: "Valid",
+						IsConditional: true
 					}
 				} else if ((/%SetSharedSubDefine\([a-zA-Z_]+[a-zA-Z_\d]*\)$/).test(ProcessedText)) { //Define list format
 					let SubroutineName = ProcessedText.replace(/%SetSharedSubDefine\(/, "")
@@ -282,7 +294,8 @@ Note:
 						SubroutineName: SubroutineName,
 						Comment: Comment,
 						ReusedNameLineNumbers: [],
-						Type: "Valid"
+						Type: "Valid",
+						IsConditional: false
 					}
 				} else if ((/^\s*$/).test(ProcessedText)) {
 					return {
@@ -409,16 +422,32 @@ Note:
 		let OutputJMLListText = ""
 		let OutputDefineListText = ""
 		let CurrentJMLLocation = BigInt("0x" + document.getElementById("Input_StartingJMLAddress").value) + RatsTagSize
+
+		function PrependDefine() {
+			if (document.getElementById("Setting_DefinePrependSharedSub").checked) {
+				OutputDefineListText += "SharedSub_"
+			}
+		}
+		
 		InputList_ShallowCopy.forEach((Element, Index, Arr) => {
 			let String_StartAddress = CurrentJMLLocation.toString(16).padStart(6, "0").toUpperCase()
 			let String_NthJMLPosition = (Index+1).toString(10)
 		
-			OutputJMLListText += "autoclean JML " + Element.SubroutineName + "\t\t;"
-			OutputDefineListText += "\t\t%SetSharedSubDefine("
-			if (document.getElementById("Setting_DefinePrependSharedSub").checked) {
-				OutputDefineListText += "SharedSub_"
+			if (!Element.IsConditional) {
+				OutputJMLListText += "autoclean JML " + Element.SubroutineName + "\t\t;"
+				OutputDefineListText += "\t\t%SetSharedSubDefine("
+				PrependDefine()
+				OutputDefineListText += Element.SubroutineName
+			} else {
+				OutputJMLListText += "%ConditionalSharedSubJMLList(" + Element.MacroParamaters[0] + ", " + Element.MacroParamaters[1] + ", " + Element.MacroParamaters[2] + ")"
+				OutputDefineListText += "\t\t%ConditionalSharedSubDefineList("
+				PrependDefine()
+				OutputDefineListText += Element.MacroParamaters[0] + ", "
+				PrependDefine()
+				OutputDefineListText += Element.MacroParamaters[1] + ", "
+				OutputDefineListText += Element.MacroParamaters[2]
 			}
-			OutputDefineListText += Element.SubroutineName + ")\t\t;"
+			OutputDefineListText += ")\t\t;"
 			if (document.getElementById("Setting_DisplayEachJMLInfo").checked) {
 				OutputJMLListText += "[$" + String_StartAddress + ", JML #" + String_NthJMLPosition + "] "
 				OutputDefineListText += "[$" + String_StartAddress + ", JML #" + String_NthJMLPosition + "] "

@@ -37,6 +37,14 @@
 				!{<Define_Name>} #= !SharedSub_CurrentJMLAddress			;>First set define at current address
 				!SharedSub_CurrentJMLAddress #= !SharedSub_CurrentJMLAddress+4		;>Then update the current address position for the next JML instruction location
 			endmacro
+			
+			macro ConditionalSharedSubDefineList(Label_True, Label_False, Condition)
+				if <Condition>
+					%SetSharedSubDefine(Label_True)
+				else
+					%SetSharedSubDefine(Label_False)
+				endif
+			endmacro
 		endif
 	;[Safe to Edit]
 	;Place your "use flag" defines here. It must have them be defined as
@@ -62,11 +70,11 @@
 	;Afterwards, you can utilize them by having "JSL !RoutineDefineName"
 	;
 	;Syntax: %SetSharedSubDefine(RoutineDefineName)
+	;Conditional: %ConditionalSharedSubJMLList(RoutineDefineName, Placeholder, !Define_ConditionState)
 	;
 	;Notes
 	; - The orders in JML list in sharedsub.asm and the macro define list
-	;   here must match. This also includes if statements for
-	;   conditionally-added subroutines.
+	;   here must match. This also includes conditionally-added subroutines.
 	; - If you run into another ASM resource whose defines conflicts with
 	;   Shared Subroutines's routine defines, to restore the define names,
 	;   you can re-include this define file at where you want it to be
@@ -75,16 +83,9 @@
 	;   must occupy the same number of bytes and number of items here
 	;   reguardless if the condition is met or not. This can be done using
 	;   substituting with other item in the list or a placeholder (using
-	;   "else").
-	; - If statement, when the conditions fail, they must insert a
-	;   placeholder (1 for EACH) instead of nothing else you could have a
-	;   list that expands and overwrite whatever freespace-occupied stuff
-	;   after the list.
-		if !SharedSubUseFlag_FindFreeUploadSlot
-			%SetSharedSubDefine(FindFreeUploadSlot)
-		else
-			%SetSharedSubDefine(SharedSub_Placeholder)
-		endif
+	;   "else"). Easiest way is to use the aformentioned conditional
+	;   macro.
+		%ConditionalSharedSubDefineList(FindFreeUploadSlot, Placeholder, !SharedSubUseFlag_FindFreeUploadSlot)
 		%SetSharedSubDefine(GetRand2)
 		%SetSharedSubDefine(RangedRandomRt)
 		%SetSharedSubDefine(ChangeMap16)
