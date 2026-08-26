@@ -281,9 +281,9 @@ Note:
 						Type: "Valid",
 						IsConditional: false
 					}
-				} else if ((/%(ConditionalSharedSubJMLList|ConditionalSharedSubDefineList)\([a-zA-Z_]+[a-zA-Z_\d]*, [a-zA-Z_]+[a-zA-Z_\d]*, ![a-zA-Z_]+[a-zA-Z_\d]*\)/).test(ProcessedText)) { //conditional
+				} else if ((/%(ConditionalSharedSubJMLList|ConditionalSharedSubDefineList)\([a-zA-Z_]+[a-zA-Z_\d]*, [a-zA-Z_]+[a-zA-Z_\d]*, ![a-zA-Z_]+[a-zA-Z_\d]*\)$/).test(ProcessedText)) { //conditional
 					let MacroParamaters = ProcessedText.replace(/%(ConditionalSharedSubJMLList|ConditionalSharedSubDefineList)\(/, "").replace(/\).*$/, "").split(/, /)
-					let SubroutineName = ProcessedText.replace(/^.*\(/, "").replace(/\).*$/, "")
+					let SubroutineName = MacroParamaters[0]
 					return {
 						LineNumber: Element.LineNumber,
 						SubroutineName: SubroutineName,
