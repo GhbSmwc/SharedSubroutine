@@ -160,9 +160,10 @@ JMLListStart: ;>The start byte-address of the RATS
 ;    again with a different setting, that results in more bytes used of the list, and overwrites stuff
 ;    past the last byte of the shorter JML list which could corrupt it (either its a table with invalid
 ;    values, or code that will not either glitch or crash when executed). An easier way to simply
-;    use %ConditionalSharedSubJMLList(UseableSubroutine, Placeholder, !Define_Condition)
+;    use %ConditionalSharedSubJMLList(UseableSubroutine, Placeholder, !Define_Condition), which
+;    automatically handles this.
 ; -- When patching SharedSub.asm with a subroutine that passed the condition, then patching it again with
-;    that same subrouintine but this time, failed, will autoclean it first and then replaced with with a
+;    that same subroutine but this time, failed, will autoclean it first and then replaced with with a
 ;    placeholder.
 
 ; general

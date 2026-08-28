@@ -448,7 +448,7 @@ Note:
 				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub")
 				OutputDefineListText += Element.SubroutineName
 			} else {
-				OutputJMLListText += "%ConditionalSharedSubJMLList(" + Element.MacroParamaters[0] + ", " + Element.MacroParamaters[1] + ", " + Element.MacroParamaters[2] + ")"
+				OutputJMLListText += "%ConditionalSharedSubJMLList(" + Element.MacroParamaters[0] + ", " + Element.MacroParamaters[1] + ", " + Element.MacroParamaters[2] + ")\t\t;"
 				OutputDefineListText += "\t\t%ConditionalSharedSubDefineList("
 				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub")
 				OutputDefineListText += Element.MacroParamaters[0] + ", "

@@ -50,9 +50,9 @@
 	;Place your "use flag" defines here. It must have them be defined as
 	;0 here.
 	;
-	;This defaults the "use flag" of subroutines to 0. Then later, uses
-	;incsrc "3rd_partyDefineFile.asm", which that conditionally sets
-	;the "use flag" to 1 to indicate a subroutine being used.
+	;This defaults the "use flag" of subroutines to 0. Then immidiately,
+	;uses incsrc "3rd_partyDefineFile.asm", which that conditionally
+	;sets the "use flag" to 1 to indicate a subroutine being used.
 		!SharedSubUseFlag_FindFreeUploadSlot = 0
 	;Place your "incsrc use flag marker" here. Along with placing a
 	;define file "SharedSub_Defines/SharedSubroutineDefs.asm"
@@ -60,10 +60,13 @@
 	;depending on the configuration). The example below:
 	
 		;incsrc "DefineConfigurationThingThatMayUseDMA.asm"
-			;^This contains the following somewhere in the define:
+			;^This contains the following somewhere in the file:
 			;	if !Setting != 0
 			;		!SharedSubUseFlag_FindFreeUploadSlot = 1
 			;	endif
+			; Make sure no 3rd party ASM files' defines incsrcs into
+			; this define file else it will infinitely include this
+			; file and the other file and cause an error.
 	
 	;[Safe to Edit]
 	;These below assign each subroutine JML address location to a define.
@@ -84,7 +87,7 @@
 	;   reguardless if the condition is met or not. This can be done using
 	;   substituting with other item in the list or a placeholder (using
 	;   "else"). Easiest way is to use the aformentioned conditional
-	;   macro.
+	;   macro, which automatically handles the substitute.
 		%ConditionalSharedSubDefineList(FindFreeUploadSlot, Placeholder, !SharedSubUseFlag_FindFreeUploadSlot)
 		%SetSharedSubDefine(GetRand2)
 		%SetSharedSubDefine(RangedRandomRt)
