@@ -38,11 +38,11 @@
 				!SharedSub_CurrentJMLAddress #= !SharedSub_CurrentJMLAddress+4		;>Then update the current address position for the next JML instruction location
 			endmacro
 			
-			macro ConditionalSharedSubDefineList(Label_True, Label_False, Condition)
+			macro ConditionalSharedSubDefineList(DefineName_True, DefineName_False, Condition)
 				if <Condition>
-					%SetSharedSubDefine(Label_True)
+					%SetSharedSubDefine(DefineName_True)
 				else
-					%SetSharedSubDefine(Label_False)
+					%SetSharedSubDefine(DefineName_False)
 				endif
 			endmacro
 		endif
