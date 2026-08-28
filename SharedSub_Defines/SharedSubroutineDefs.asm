@@ -54,19 +54,25 @@
 	;uses incsrc "3rd_partyDefineFile.asm", which that conditionally
 	;sets the "use flag" to 1 to indicate a subroutine being used.
 		!SharedSubUseFlag_FindFreeUploadSlot = 0
+	
 	;Place your "incsrc use flag marker" here. Along with placing a
 	;define file "SharedSub_Defines/SharedSubroutineDefs.asm"
 	;(which the pasted define file conditionally sets the use flag
-	;depending on the configuration). The example below:
+	; to 1 depending on the configuration). The example below:
 	
 		;incsrc "DefineConfigurationThingThatMayUseDMA.asm"
 			;^This contains the following somewhere in the file:
 			;	if !Setting != 0
 			;		!SharedSubUseFlag_FindFreeUploadSlot = 1
 			;	endif
-			; Make sure no 3rd party ASM files' defines incsrcs into
-			; this define file else it will infinitely include this
-			; file and the other file and cause an error.
+			; NOTES:
+			; - Make sure no 3rd party ASM files' defines incsrcs into
+			;   this define file else it will infinitely include this
+			;   file and the other file and cause an error.
+			; - Make sure they DO NOT set the use flag to 0 if not
+			;   used. Either it set it to 1, or leave it as is.
+			;   Setting it to 0 risks excluding a subroutine define
+			;   when it is actually used.
 	
 	;[Safe to Edit]
 	;These below assign each subroutine JML address location to a define.
