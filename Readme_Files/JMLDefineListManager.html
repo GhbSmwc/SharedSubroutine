@@ -432,9 +432,15 @@ Note:
 		let OutputDefineListText = ""
 		let CurrentJMLLocation = BigInt("0x" + document.getElementById("Input_StartingJMLAddress").value) + RatsTagSize
 
-		function PrependDefine(PrependText, ElementIDCheck) {
-			if (document.getElementById(ElementIDCheck).checked) {
-				OutputDefineListText += PrependText
+		function PrependDefine(PrependText, ElementIDCheck, ListType) {
+			if (ListType == "DefineList") {
+				if (document.getElementById(ElementIDCheck).checked) {
+					OutputDefineListText += PrependText
+				}
+			} else if (ListType == "JMLList") {
+				if (document.getElementById(ElementIDCheck).checked) {
+					OutputJMLListText += PrependText
+				}
 			}
 		}
 		
@@ -445,16 +451,19 @@ Note:
 			if (!Element.IsConditional) {
 				OutputJMLListText += "autoclean JML " + Element.SubroutineName + "\t\t;"
 				OutputDefineListText += "\t\t%SetSharedSubDefine("
-				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub")
+				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub", "DefineList")
 				OutputDefineListText += Element.SubroutineName
 			} else {
-				OutputJMLListText += "%ConditionalSharedSubJMLList(" + Element.MacroParamaters[0] + ", " + Element.MacroParamaters[1] + ", " + Element.MacroParamaters[2] + ")\t\t;"
+				OutputJMLListText += "%ConditionalSharedSubJMLList(" + Element.MacroParamaters[0] + ", " + Element.MacroParamaters[1] + ", !"
+				PrependDefine("SharedSubUseFlag_", "Setting_DefinePrependSharedSub_Condition", "JMLList")
+				OutputJMLListText += Element.MacroParamaters[2] + ")\t\t;"
+				
 				OutputDefineListText += "\t\t%ConditionalSharedSubDefineList("
-				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub")
+				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub", "DefineList")
 				OutputDefineListText += Element.MacroParamaters[0] + ", "
-				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub")
+				PrependDefine("SharedSub_", "Setting_DefinePrependSharedSub", "DefineList")
 				OutputDefineListText += Element.MacroParamaters[1] + ", !"
-				PrependDefine("SharedSubUseFlag_", "Setting_DefinePrependSharedSub_Condition")
+				PrependDefine("SharedSubUseFlag_", "Setting_DefinePrependSharedSub_Condition", "DefineList")
 				OutputDefineListText += Element.MacroParamaters[2]
 			}
 			OutputDefineListText += ")\t\t;"
