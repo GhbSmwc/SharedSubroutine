@@ -40,9 +40,9 @@
 			
 			macro ConditionalSharedSubDefineList(DefineName_True, DefineName_False, Condition)
 				if <Condition>
-					%SetSharedSubDefine(DefineName_True)
+					%SetSharedSubDefine(<DefineName_True>)
 				else
-					%SetSharedSubDefine(DefineName_False)
+					%SetSharedSubDefine(<DefineName_False>)
 				endif
 			endmacro
 		endif
