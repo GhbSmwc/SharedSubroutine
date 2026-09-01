@@ -6,6 +6,16 @@ includefrom "../sharedsub.asm"
 ;included file(s). What you cannot safely do is JSL'ing directly
 ;to these subroutines outside this patch.
 
+;To insert conditionally-added subroutines, just do this:
+;if !SharedSubUseFlag_<SubroutineName>
+;	SubroutineLabel:
+;	;<Code here>
+;endif
+;Note that not doing that result in such a code inserted into
+;the ROM without the JML list and define list referencing it.
+;This can be fixed by adding the if statement and patching
+;again. However, if there are multiple freespace blocks then
+;autoclean must be performed prior.
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;Subroutine placeholder
 ;This is if you plan on re-patching shared subroutines
