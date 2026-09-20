@@ -83,7 +83,7 @@
 	;Afterwards, you can utilize them by having "JSL !RoutineDefineName"
 	;
 	;Syntax: %SetSharedSubDefine(RoutineDefineName)
-	;Conditional: %ConditionalSharedSubJMLList(RoutineDefineName, Placeholder, !Define_ConditionState)
+	;Conditional: %ConditionalSharedSubDefineList(RoutineDefineName, Placeholder, !Define_ConditionState)
 	;
 	;Notes
 	; - The orders in JML list in sharedsub.asm and the macro define list
